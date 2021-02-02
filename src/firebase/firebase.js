@@ -1,28 +1,31 @@
-import app from 'firebase/app'
+import firebase from 'firebase'
 import 'firebase/auth'
 import 'firebase/storage'
 import 'firebase/database'
-import * as firebaseall from 'firebase'
+import "firebase/functions"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAz06BJIu4CQZ68m2GFAsJbsUrWRVcTNhQ",
-  authDomain: "sprint-goals-bc1d3.firebaseapp.com",
-  databaseURL: "https://sprint-goals-bc1d3.firebaseio.com",
-  projectId: "sprint-goals-bc1d3",
-  storageBucket: "sprint-goals-bc1d3.appspot.com",
-  messagingSenderId: "282852871556",
-  appId: "1:282852871556:web:aacde10c0ffbae3bf4a1d1",
-  measurementId: "G-S9QR48HEJX"
+  apiKey: "AIzaSyAo_UVgQnHQ3bkaGO6O4y5ZaF5oOyb67h0",
+  authDomain: "sport-app-16c82.firebaseapp.com",
+  databaseURL: "https://sport-app-16c82.firebaseio.com",
+  projectId: "sport-app-16c82",
+  storageBucket: "sport-app-16c82.appspot.com",
+  messagingSenderId: "814415843828",
+  appId: "1:814415843828:web:008522ad1b0ffa4b25e9a1",
+  measurementId: "G-953BWJQKWL"
 };
 
 
 class Firebase {
   constructor() {
-    app.initializeApp(firebaseConfig);
-    this.auth = app.auth()
-    this.storage = app.storage()
-    this.db = app.database()
-    firebaseall.analytics()
+    firebase.initializeApp(firebaseConfig);
+    this.auth = firebase.auth()
+    this.storage = firebase.storage()
+    this.db = firebase.database()
+    this.functions = firebase.functions();
+    this.addCoachRole = this.functions.httpsCallable("addCoachRole")
+    this.sayHello = this.functions.httpsCallable("sayHello")
+    //firebaseall.analytics()
   }
 
   login(email, password) {
@@ -36,7 +39,7 @@ class Firebase {
 
     await this.auth.createUserWithEmailAndPassword(email, password)
       .then(function () {
-        const user = app.auth().currentUser;
+        const user = firebase.auth().currentUser;
         user.sendEmailVerification();
       })
     
@@ -50,6 +53,15 @@ class Firebase {
     return this.auth.currentUser.updateProfile({
       photoURL: url
     })
+  }
+
+  isCoach(id, setIsCoach){
+    var starCountRef = this.db.ref(id+"/user-info/").orderByKey();
+    starCountRef.on('value', function (snapshot) {
+      console.log(snapshot.val())
+      setIsCoach(snapshot.val().isCoach)
+    })
+
   }
 
   updateUserProfile(props){
