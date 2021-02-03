@@ -1,10 +1,10 @@
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
-//import NavBar from "../../components/navigation/navbar"
+import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
 import firebase from '../../firebase/firebase';
-//import AddIcon from '@material-ui/icons/Add';
+import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
@@ -44,30 +44,26 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-function CoachApp(props) {
+function SportsmanApp(props) {
   const [isFirebaseInit, setIsFirebaseInit] = useState(false)
-  const { coachId } = useParams();
+  const { userId } = useParams();
   const classes = useStyles();
 
   useEffect(() => {
-    //console.log("useEffect started")
     if (!isFirebaseInit) {
-      
       firebase.isInit().then(val => {
-        setIsFirebaseInit(true)
-        console.log("useEffect started")
-        console.log(firebase.auth.currentUser)
-        //getting the user's IdToken
+        
+        //check if the user is autorized
         if (firebase.getCurrentUserId()){
-          //if user is logged in
+          //get the user's custom claims
           firebase.auth.currentUser.getIdTokenResult()
           .then((idTokenResult) => {
-            //console.log(idTokenResult.claims.coach)
-            if (!idTokenResult.claims.coach || firebase.getCurrentUserId() !== coachId){
+            console.log(idTokenResult.claims.coach)
+            if (idTokenResult.claims.coach || firebase.getCurrentUserId() !== userId){
               throw new Error("No auth!")
             }
             return idTokenResult.claims
-          }).then((claims)=>{
+          }).then((claims) => {
             let userInfo = {
               displayName: firebase.auth.currentUser.displayName,
               email: firebase.auth.currentUser.email,
@@ -84,8 +80,15 @@ function CoachApp(props) {
             console.log(error);
             props.history.replace("/404")
           });
+
+          try{
+            firebase.getUserIP({email: firebase.auth.currentUser.email}).then(ip => console.log(ip))
+          }catch(err){
+            console.log(err)
+          }
+
         }else{
-          //if user is not authorized
+          //redirect for unautorized users
           console.log("No auth!")
           props.history.replace("/")
         }
@@ -94,8 +97,6 @@ function CoachApp(props) {
       })
     }
   }, [isFirebaseInit])
-
-  
 
   function authCheck(urlId, userId) {
     console.log(urlId, userId)
@@ -107,11 +108,11 @@ function CoachApp(props) {
 
   return (
     <React.Fragment>
- 
+
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
-        <h1>Coach App</h1>
-        <Suspense fallback={null}>
-          <h3>Welcome, coach {props.user.displayName}</h3>
+        <h1>Sportsman App</h1>
+        <Suspense>
+          <h2>Welcome {props.user.displayName}!</h2>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
         <button onClick={()=>{
@@ -120,7 +121,7 @@ function CoachApp(props) {
           }}>Logout</button>
       </Container>
 
-      
+
 
     </React.Fragment>
 
@@ -129,7 +130,10 @@ function CoachApp(props) {
 
 const mapStateToProps = state => {
   return {
-    user: state.user
+    user: state.user,
+    //theme: state.theme,
+    //goals: state.goals,
+    //goalCategories: state.goalCategories
   }
 }
 
@@ -139,8 +143,8 @@ const mapDispatchToProps = dispatch => {
     //loadGoals: (arr) => dispatch({ type: "GOALS/LOAD", payload: arr }),
     //loadCategories: (arr) => dispatch({ type: "GOALS/CATEGORY/LOAD", payload: arr }),
     //loadAvatar: (url) => dispatch({ type: "AVATAR/LOAD", payload: url }),
-    //loadNotifications: (arr)=>dispatch({type: "NOTIFICATION/LOAD", payload: arr})
+    //loadNotifications: (arr) => dispatch({ type: "NOTIFICATION/LOAD", payload: arr })
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(CoachApp));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(SportsmanApp));

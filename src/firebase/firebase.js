@@ -25,6 +25,7 @@ class Firebase {
     this.functions = firebase.functions();
     this.addCoachRole = this.functions.httpsCallable("addCoachRole")
     this.sayHello = this.functions.httpsCallable("sayHello")
+    this.getUserIP = this.functions.httpsCallable("getUserIP")
     //firebaseall.analytics()
   }
 

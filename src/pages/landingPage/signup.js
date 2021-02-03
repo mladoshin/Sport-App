@@ -45,6 +45,7 @@ const useStyles = makeStyles((theme) => ({
 function SignUpPage(props) {
     const classes = useStyles();
 
+    //states for the form
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
@@ -53,6 +54,8 @@ function SignUpPage(props) {
     const [discipline, setDiscipline] = useState("")
 
     console.log("isCoach = "+isCoach)
+
+    //function for clearing all the states after switching between coach signup and sportsman signup
     function clearState(){
         setFirstName("")
         setLastName("")
@@ -61,9 +64,28 @@ function SignUpPage(props) {
         setDiscipline("")
     }
 
+    //function for switching between coach signup and sportsman signup
     function switchPage(val){
         clearState()
         setIsCoach(val)
+    }
+
+    function handleRegisterBtn_Click(e){
+        //check if the user is signed out
+        if (!firebase.getCurrentUserId()) {
+            //register new user
+            onRegister(e, props.history, firstName, lastName, email, password, isCoach).then(() => {
+
+                //adding the coach role to custom claims if the user signed up for the coach account
+                if (isCoach){
+                    firebase.addCoachRole({email: email}).then(res => console.log(res))
+                }
+            })
+        } else {
+            //the user is already signed in
+            alert("Sign out before creating new account!");
+            props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
+        }
     }
 
 
@@ -179,19 +201,7 @@ function SignUpPage(props) {
                             variant="contained"
                             color="primary"
                             className={classes.submit}
-                            onClick={(e) => {
-                                if (!firebase.getCurrentUserId()) {
-                                    onRegister(e, props.history, firstName, lastName, email, password, props.setUser, isCoach).then(() => {
-                                        if (isCoach){
-                                            firebase.addCoachRole({email: email}).then(res => console.log(res))
-                                        }
-                                    })
-                                } else {
-                                    alert("Sign out before creating new account!");
-                                    props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
-                                }
-
-                            }}
+                            onClick={(e) => handleRegisterBtn_Click(e)}
                         >
                             Sign Up
                     </Button>
@@ -212,20 +222,13 @@ function SignUpPage(props) {
     );
 }
 
+//function for writing user-information into the database
 function putUserDataToDB(props) {
-    //console.log(props.geo.country)
-    firebase.db.ref(firebase.getCurrentUserId() + "/user-info").set({
-        name: props.name,
-        surname: props.surname,
-        isCoach: props.isCoach,
-        email: props.email,
-        mobile_num: props.mobile_num ? props.mobile_num : null,
-        discipline: props.discipline ? props.discipline : null
+    const uid = firebase.getCurrentUserId()
 
-    });
     getUserData().then((geo) => {
-        //console.log(geo)
-        firebase.db.ref(firebase.getCurrentUserId() + "/user-info/geolocation").set({
+        
+        let geolocation = {
             country: geo.country,
             countryCode: geo.countryCode,
             regionName: geo.regionName,
@@ -236,26 +239,39 @@ function putUserDataToDB(props) {
             timezone: geo.timezone,
             org: geo.org,
             ip: geo.query
-        })
+        }
+        
+        //writing into realtime database
+        firebase.db.ref(uid + "/user-info").set({
+            name: props.name,
+            surname: props.surname,
+            coach: props.isCoach,
+            email: props.email,
+            mobile_num: props.mobile_num ? props.mobile_num : null,
+            discipline: props.discipline ? props.discipline : null,
+            geolocation: geolocation
+    
+        });
     })
 
 }
 
+//get the geolocation json data from the api
 async function getUserData() {
     let response = await fetch("http://ip-api.com/json/")
     const json = await response.json()
     return json
 }
 
-async function onRegister(e, history, name, surname, email, password, setUser, isCoach) {
+//async register function
+async function onRegister(e, history, name, surname, email, password, isCoach) {
     e.preventDefault()
     
-
     try {
         await firebase.register(name, surname, email, password)
         
+        //set the session storage property Auth to true
         sessionStorage.setItem("Auth", true)
-        //setUser({ id: firebase.getCurrentUserId(), auth: true, name: firebase.auth.currentUser.displayName })  //updating redux state
         alert("You have successfully registered! Congrats!")
 
         //redirect to login forms
@@ -265,11 +281,10 @@ async function onRegister(e, history, name, surname, email, password, setUser, i
             history.replace("/coach-login")
         }
         
-
         //Write to database
         putUserDataToDB({name: name, surname: surname, email: email, isCoach: isCoach})
     } catch (error) {
-        //alert(error.message)
+        //display an error
         console.log(error.message)
     }
 }

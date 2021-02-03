@@ -3,27 +3,17 @@ import { connect } from 'react-redux'
 import { Switch, Route, Redirect, BrowserRouter, withRouter } from "react-router-dom";
 import { createMuiTheme, ThemeProvider } from '@material-ui/core';
 import firebase from './firebase/firebase'
-import NavBar from './components/navigation/navbar'
 import isTouchable from "./checkDeviceFunction/isTouchable"
 
 import HomePage from "./pages/landingPage/homePage"
 import SignInPage from "./pages/landingPage/signin"
 import SignUpPage from "./pages/landingPage/signup"
-import { auth } from 'firebase-admin';
+import ErrorPage from "./pages/errorPage"
 
-import SportsmanApp from './pages/sportsmanApp';
+import SportsmanApp from './pages/sportsmanApp/sportsmanApp';
 import CoachApp from './pages/coachApp/coachApp';
 
 function App(props) {
-
-  firebase.auth.onAuthStateChanged(user => {
-    if (user){
-      user.getIdTokenResult().then(idTokenResult => {
-        user.admin = idTokenResult.claims.isCoach
-        console.log(idTokenResult.claims)
-      })
-    }
-  })
 
   useEffect(() => {
     //set the isTouchabe (from isTouchable function) to redux
@@ -54,6 +44,7 @@ function App(props) {
           <Route exact path="/coach-login" render={() => <SignInPage/>} />
           <Route exact path="/dashboard/userId=:userId" render={() => <SportsmanApp/>} />
           <Route exact path="/dashboard/coachId=:coachId" render={() => <CoachApp/>} />
+          <Route exact path="/404" render={() => <ErrorPage/>} />
 
 
         </Switch>

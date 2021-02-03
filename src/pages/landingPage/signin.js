@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import firebase from '../../firebase/firebase'
-import { Typography, Avatar, Button, CssBaseline, TextField, FormControlLabel, Checkbox, Link, Grid, Container, Switch } from '@material-ui/core'
-import { Redirect, withRouter } from "react-router-dom"
+import { Typography, Avatar, Button, CssBaseline, TextField, FormControlLabel, Checkbox, Link, Grid, Container } from '@material-ui/core'
+import { withRouter } from "react-router-dom"
 import HomeNavbar from "../../components/navigation/homeNavbar"
 
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
@@ -36,40 +36,48 @@ const useStyles = makeStyles((theme) => ({
 function SignInPage(props) {
   const classes = useStyles();
 
+  //states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isCoach, setIsCoach] = useState(false)
 
-  firebase.logout()
-
-  //firebase.auth.onAuthStateChanged(user => {
-  //console.log(user)
-  //})
-
-
-  async function login(e, history, email, password, setUser) {
-    e.preventDefault()
-
-    try {
-
-      await firebase.login(email, password)
-
-      if (!isCoach) {
-        //firebase.addCoachRole({email: email}).then(res => console.log(res))
-      }
-
-      //await firebase.isCoach(firebase.getCurrentUserId(), setIsCoach)
-      //isCoachFunc(setIsCoach).then(()=>console.log(isCoach))
-      await console.log("Successfull login")
-      //setUser({ id: firebase.getCurrentUserId(), auth: true, name: firebase.auth.currentUser.displayName })  //updating redux state
-      sessionStorage.setItem("Auth", true)
-
-
-    } catch (error) {
-      alert(error.message)
+  //handles the login button click
+  function handleLoginBtn_Click(e){
+    if (!firebase.getCurrentUserId()) {
+      login(e, email, password)
+      .then(() => redirectToApp())
+      .then(() => {return firebase.getUserIP({email: email})})
+      .then(ugeo => checkIP(ugeo))
+      .catch(error => console.log(error))
+    } else {
+      alert("Sign out before signing in!")
+      props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
     }
+  }
 
-    //return await isCoach
+  //function which checks if the user is coach or sportsman and redirects to the right app
+  function redirectToApp() {
+    try{
+      //firebase.getUserIP({email: email}).then(ip => console.log(ip))
+    }catch(err){
+      console.log(err)
+    }
+    
+    firebase.auth.currentUser.getIdTokenResult()
+      .then((idTokenResult) => {
+        //display the custom claim
+        console.log(idTokenResult.claims.coach)
+
+        //redirect to the app dashboard for both sportsman and coach
+        if (idTokenResult.claims.coach) {
+          props.history.replace("/dashboard/coachId=" + firebase.getCurrentUserId())
+        } else {
+          props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
+        }
+
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
   return (
@@ -85,11 +93,6 @@ function SignInPage(props) {
           <Typography component="h1" variant="h5">
             Sign in
                     </Typography>
-
-          <FormControlLabel
-            control={<Switch checked={isCoach} onChange={(e) => setIsCoach(e.target.checked)} name="checkedA" />}
-            label="Login as a coach"
-          />
 
           <form className={classes.form} noValidate>
             <TextField
@@ -128,34 +131,7 @@ function SignInPage(props) {
               variant="contained"
               color="primary"
               className={classes.submit}
-              onClick={(e) => {
-
-                if (!firebase.getCurrentUserId()) {
-                  login(e, props.history, email, password, props.setUser, setIsCoach).then(() => {
-                    //get the user token
-                    firebase.auth.currentUser.getIdTokenResult()
-                      .then((idTokenResult) => {
-                        //display the custom claim
-                        console.log(idTokenResult.claims.coach)
-
-                        //redirect to the app dashboard for both sportsman and coach
-                        if (idTokenResult.claims.coach){
-                          props.history.replace("/dashboard/coachId="+firebase.getCurrentUserId())
-                        }else{
-                          props.history.replace("/dashboard/userId="+firebase.getCurrentUserId())
-                        }
-
-                      })
-                      .catch((error) => {
-                        console.log(error);
-                      });
-                  })
-                } else {
-                  alert("Sign out before signing in!")
-                  props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
-                }
-
-              }}
+              onClick={(e) => handleLoginBtn_Click(e)}
             >
               Sign In
                     </Button>
@@ -174,20 +150,42 @@ function SignInPage(props) {
           </form>
         </div>
       </Container>
-
-
-
-
     </React.Fragment>
 
   );
 }
 
-async function isCoach(id, setIsCoach) {
+//function for fetching the geolocation information about a user
+async function getUserData() {
+  let response = await fetch("http://ip-api.com/json/")
+  const json = await response.json()
+  return json
+}
+
+//function for checking the current ip and comparing it to the original from realtime database
+function checkIP(ugeo){
+  getUserData().then(geo => {
+    if(geo.ip!==ugeo.ip && geo.city !== ugeo.city){
+      console.log("The account has been accessed from the different place")
+    }else{
+      console.log("The IP check is successful!")
+    }
+  })
+}
+//async function for logging in 
+async function login(e, email, password) {
+  e.preventDefault()
+
   try {
-    firebase.isCoach(firebase.getCurrentUserId(), setIsCoach)
+    //login 
+    await firebase.login(email, password)
+    await console.log("Successfull login")
+
+    //set sessionStorage property Auth
+    sessionStorage.setItem("Auth", true)
+
   } catch (error) {
-    console.log(error.message)
+    alert(error.message)
   }
 }
 
