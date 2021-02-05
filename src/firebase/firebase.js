@@ -23,7 +23,14 @@ class Firebase {
     this.storage = firebase.storage()
     this.db = firebase.database()
     this.functions = firebase.functions();
-    this.addCoachRole = this.functions.httpsCallable("addCoachRole")
+
+    //do not call this function
+    let addUserRole = this.functions.httpsCallable("addUserRole")
+
+    this.addCoachRole = (email) => addUserRole({email: email, role: "COACH"})
+    this.addAdminRole = (email) => addUserRole({email: email, role: "ADMIN"})
+    this.addSportsmanRole = (email) => addUserRole({email: email, role: "SPORTSMAN"})
+
     this.sayHello = this.functions.httpsCallable("sayHello")
     this.getUserIP = this.functions.httpsCallable("getUserIP")
     //firebaseall.analytics()

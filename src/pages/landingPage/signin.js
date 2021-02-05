@@ -50,7 +50,8 @@ function SignInPage(props) {
       .catch(error => console.log(error))
     } else {
       alert("Sign out before signing in!")
-      props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
+      redirectToApp()
+      //props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
     }
   }
 
@@ -65,13 +66,19 @@ function SignInPage(props) {
     firebase.auth.currentUser.getIdTokenResult()
       .then((idTokenResult) => {
         //display the custom claim
-        console.log(idTokenResult.claims.coach)
+        console.log(idTokenResult.claims.role)
+
+        if(email=="admin@admin.com"){
+          console.log("Welcome Admin!")
+        }
 
         //redirect to the app dashboard for both sportsman and coach
-        if (idTokenResult.claims.coach) {
+        if (idTokenResult.claims.role=="COACH") {
           props.history.replace("/dashboard/coachId=" + firebase.getCurrentUserId())
-        } else {
+        } else if(idTokenResult.claims.role=="SPORTSMAN") {
           props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
+        }else if(idTokenResult.claims.role=="ADMIN"){
+          props.history.replace("/adminApp")
         }
 
       })

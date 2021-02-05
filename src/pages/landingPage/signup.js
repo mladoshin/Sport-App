@@ -76,10 +76,21 @@ function SignUpPage(props) {
             //register new user
             onRegister(e, props.history, firstName, lastName, email, password, isCoach).then(() => {
 
+                //log the user out after the registration
+                firebase.logout()
+                console.log("The user has been logged out after registration successfully!")
+
                 //adding the coach role to custom claims if the user signed up for the coach account
-                if (isCoach){
-                    firebase.addCoachRole({email: email}).then(res => console.log(res))
+                if (isCoach && email!=="admin@admin.com"){
+                    firebase.addCoachRole(email).then(res => console.log(res))
+                }else if(!isCoach){
+                    firebase.addSportsmanRole(email).then(res => console.log(res))
+                }else if(email=="admin@admin.com" && !isCoach){
+                    firebase.addAdminRole(email).then(res => console.log(res))
                 }
+
+                
+                
             })
         } else {
             //the user is already signed in
@@ -273,6 +284,7 @@ async function onRegister(e, history, name, surname, email, password, isCoach) {
         //set the session storage property Auth to true
         sessionStorage.setItem("Auth", true)
         alert("You have successfully registered! Congrats!")
+        
 
         //redirect to login forms
         if (!isCoach){

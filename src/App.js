@@ -12,6 +12,7 @@ import ErrorPage from "./pages/errorPage"
 
 import SportsmanApp from './pages/sportsmanApp/sportsmanApp';
 import CoachApp from './pages/coachApp/coachApp';
+import AdminApp from './pages/adminApp/adminApp';
 
 function App(props) {
 
@@ -44,6 +45,7 @@ function App(props) {
           <Route exact path="/coach-login" render={() => <SignInPage/>} />
           <Route exact path="/dashboard/userId=:userId" render={() => <SportsmanApp/>} />
           <Route exact path="/dashboard/coachId=:coachId" render={() => <CoachApp/>} />
+          <Route exact path="/adminApp" render={() => <AdminApp/>} />
           <Route exact path="/404" render={() => <ErrorPage/>} />
 
 

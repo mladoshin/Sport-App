@@ -13,15 +13,15 @@ exports.sayHello = functions.https.onCall((data, context) => {
     return data.name
 })
 
-exports.addCoachRole = functions.https.onCall((data, context) => {
+exports.addUserRole = functions.https.onCall((data, context) => {
     return admin.auth().getUserByEmail(data.email).then(user => {
         return admin.auth().setCustomUserClaims(user.uid, {
-            coach: true
+            role: data.role
         });
     }).then(() => {
         return {
-            coach: true,
-            message: data.email + " is now a coach!"
+            role: data.role,
+            message: data.email + " is now "+data.role
         }
     }).catch(err => {
         return err;

@@ -59,7 +59,7 @@ function SportsmanApp(props) {
           firebase.auth.currentUser.getIdTokenResult()
           .then((idTokenResult) => {
             console.log(idTokenResult.claims.coach)
-            if (idTokenResult.claims.coach || firebase.getCurrentUserId() !== userId){
+            if (idTokenResult.claims.role=="COACH" || firebase.getCurrentUserId() !== userId){
               throw new Error("No auth!")
             }
             return idTokenResult.claims

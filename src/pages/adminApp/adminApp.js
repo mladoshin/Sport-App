@@ -44,9 +44,8 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-function CoachApp(props) {
+function AdminApp(props) {
   const [isFirebaseInit, setIsFirebaseInit] = useState(false)
-  const { coachId } = useParams();
   const classes = useStyles();
 
   useEffect(() => {
@@ -63,7 +62,7 @@ function CoachApp(props) {
           firebase.auth.currentUser.getIdTokenResult()
             .then((idTokenResult) => {
               //console.log(idTokenResult.claims.coach)
-              if (idTokenResult.claims.role !== "COACH" || firebase.getCurrentUserId() !== coachId) {
+              if (idTokenResult.claims.role !== "ADMIN") {
                 throw new Error("No auth!")
               }
               return idTokenResult.claims
@@ -86,8 +85,9 @@ function CoachApp(props) {
             });
         } else {
           //if user is not authorized
-          console.log("No auth!")
+          
           props.history.replace("/")
+          alert("No Auth!")
         }
 
 
@@ -95,23 +95,13 @@ function CoachApp(props) {
     }
   }, [isFirebaseInit])
 
-
-
-  function authCheck(urlId, userId) {
-    console.log(urlId, userId)
-    if (urlId !== userId) {
-      return false
-    }
-    return true
-  }
-
   return (
     <React.Fragment>
 
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
-        <h1>Coach App</h1>
+        <h1>Admin App</h1>
         <Suspense fallback={null}>
-          <h3>Welcome, coach {props.user.displayName}</h3>
+          <h3>Welcome, Admin!</h3>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
         <button onClick={() => {
@@ -143,4 +133,4 @@ const mapDispatchToProps = dispatch => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(CoachApp));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(AdminApp));
