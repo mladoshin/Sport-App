@@ -54,3 +54,12 @@ exports.getUserIP = functions.https.onCall((data, context) => {
         }
     })
 })
+
+exports.userDeleted = functions.auth.user().onDelete(user => {
+    console.log("Email: " + user.email);
+    return admin.database().ref("/" + user.uid + "/").remove()
+})
+
+exports.userCreated = functions.auth.user().onCreate(user => {
+    console.log("Email: " + user.email);
+})

@@ -8,11 +8,13 @@ import isTouchable from "./checkDeviceFunction/isTouchable"
 import HomePage from "./pages/landingPage/homePage"
 import SignInPage from "./pages/landingPage/signin"
 import SignUpPage from "./pages/landingPage/signup"
-import ErrorPage from "./pages/errorPage"
+import ErrorPage from "./pages/404"
 
 import SportsmanApp from './pages/sportsmanApp/sportsmanApp';
 import CoachApp from './pages/coachApp/coachApp';
 import AdminApp from './pages/adminApp/adminApp';
+import MiniDrawer from './components/navigation/desktopNavbar';
+import Profile from './pages/adminApp/profile';
 
 function App(props) {
 
@@ -43,9 +45,19 @@ function App(props) {
           <Route exact path="/coach-login" render={() => <SignInPage isCoach={true}/>} />
           <Route exact path="/signup" render={() => <SignUpPage/>} />
           <Route exact path="/coach-login" render={() => <SignInPage/>} />
-          <Route exact path="/dashboard/userId=:userId" render={() => <SportsmanApp/>} />
-          <Route exact path="/dashboard/coachId=:coachId" render={() => <CoachApp/>} />
-          <Route exact path="/adminApp" render={() => <AdminApp/>} />
+          
+          {/* SPORTSMAN APP ROUTES*/}
+          <Route exact path="/sportsmanApp/userId=:userId" render={() => <SportsmanApp/>} />
+          <Route exact path="/sportsmanApp/userId=:userId/profile" render={() => <Profile/>} />
+
+          {/* COACH APP ROUTES*/}
+          <Route exact path="/coachApp/coachId=:coachId" render={() => <CoachApp/>} />
+          <Route exact path="/coachApp/coachId=:coachId/profile" render={() => <Profile/>} />
+
+          {/* ADMIN APP ROUTES*/}
+          <Route exact path="/adminApp" render={() => <MiniDrawer mobile={props.isTouchable}><AdminApp/></MiniDrawer>} />
+          <Route exact path="/adminApp/profile" render={() => <MiniDrawer mobile={props.isTouchable}><Profile/></MiniDrawer>} />
+
           <Route exact path="/404" render={() => <ErrorPage/>} />
 
 

@@ -1,3 +1,4 @@
+//page for the admin's profile
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
@@ -45,7 +46,7 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-function AdminApp(props) {
+function UserProfile(props) {
   const [isFirebaseInit, setIsFirebaseInit] = useState(false)
   const classes = useStyles();
 
@@ -78,7 +79,13 @@ function AdminApp(props) {
                 claims: claims
               }
               console.log(userInfo)
-              props.setUser(userInfo)
+              console.log(props.user)
+              if(!props.user){
+                props.setUser(userInfo)
+              }
+              
+              
+              
             })
             .catch((error) => {
               console.log(error);
@@ -98,17 +105,12 @@ function AdminApp(props) {
 
   return (
     <React.Fragment>
-
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
-        <h1>Admin App</h1>
+        <h1>Admin Profile</h1>
         <Suspense fallback={null}>
-          <h3>Welcome, Admin!</h3>
+          <h3>{props.user.displayName}</h3>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
-        <button onClick={() => {
-          firebase.logout()
-          props.history.replace("/")
-        }}>Logout</button>
       </Container>
 
 
@@ -134,4 +136,4 @@ const mapDispatchToProps = dispatch => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(AdminApp));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(UserProfile));

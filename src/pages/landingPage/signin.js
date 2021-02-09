@@ -49,7 +49,8 @@ function SignInPage(props) {
       .then(ugeo => checkIP(ugeo))
       .catch(error => console.log(error))
     } else {
-      alert("Sign out before signing in!")
+      //alert("Sign out before signing in!")
+      console.log(firebase.auth.currentUser)
       redirectToApp()
       //props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
     }
@@ -57,11 +58,6 @@ function SignInPage(props) {
 
   //function which checks if the user is coach or sportsman and redirects to the right app
   function redirectToApp() {
-    try{
-      //firebase.getUserIP({email: email}).then(ip => console.log(ip))
-    }catch(err){
-      console.log(err)
-    }
     
     firebase.auth.currentUser.getIdTokenResult()
       .then((idTokenResult) => {
@@ -74,9 +70,9 @@ function SignInPage(props) {
 
         //redirect to the app dashboard for both sportsman and coach
         if (idTokenResult.claims.role=="COACH") {
-          props.history.replace("/dashboard/coachId=" + firebase.getCurrentUserId())
+          props.history.replace("/coachApp/coachId=" + firebase.getCurrentUserId())
         } else if(idTokenResult.claims.role=="SPORTSMAN") {
-          props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
+          props.history.replace("/sportsmanApp/userId=" + firebase.getCurrentUserId())
         }else if(idTokenResult.claims.role=="ADMIN"){
           props.history.replace("/adminApp")
         }
