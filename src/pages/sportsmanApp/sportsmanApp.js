@@ -49,7 +49,7 @@ function SportsmanApp(props) {
   const { userId } = useParams();
   const classes = useStyles();
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!isFirebaseInit) {
       firebase.isInit().then(val => {
         
@@ -96,7 +96,7 @@ function SportsmanApp(props) {
 
       })
     }
-  }, [isFirebaseInit])
+  }, [isFirebaseInit])*/
 
   function authCheck(urlId, userId) {
     console.log(urlId, userId)

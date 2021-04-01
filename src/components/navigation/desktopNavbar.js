@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import clsx from 'clsx';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
@@ -20,6 +20,8 @@ import MailIcon from '@material-ui/icons/Mail';
 import NotificationsRoundedIcon from '@material-ui/icons/NotificationsRounded';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import { withRouter } from 'react-router-dom';
+import Avatar from '@material-ui/core/Avatar';
+import { Suspense } from 'react';
 
 
 const drawerWidth = 240;
@@ -87,26 +89,55 @@ const useStyles = makeStyles((theme) => ({
         flexGrow: 1,
         padding: theme.spacing(3),
     },
+    avatar: {
+        width: theme.spacing(4),
+        height: theme.spacing(4)
+    }
 }));
 
 function MiniDrawer(props) {
     const classes = useStyles();
     const theme = useTheme();
-    const [open, setOpen] = React.useState(false);
+    //const [open, setOpen] = React.useState(false);
+    var open = props.open
+    var setOpen = props.setOpen
 
-    const handleDrawerOpen = () => {
-        setOpen(true);
-    };
+    
 
     const handleDrawerSwitch = () => {
-        setOpen(!open)
+        if (open) {
+            setOpen(false)
+        } else {
+            setOpen(true)
+        }
     }
 
-    const handleDrawerClose = () => {
-        setOpen(false);
-    };
+    function openProfile() {
+        let role = props.user.claims.role
+        
+        if (role == "ADMIN") {
+            props.history.push("/adminApp/profile")
+        } else if (role == "COACH") {
+            props.history.push("/coachApp/coachId=" + props.user.uid + "/profile")
+        } else if (role == "SPORTSMAN") {
+            props.history.push("/sportsmanApp/userId=" + props.user.uid + "/profile")
+        }
+    }
 
-    console.log(props.mobile)
+    
+
+    function handleMenuButtonClick(destination) {
+        let role = props.user.claims.role
+        
+        if (role == "ADMIN") {
+            props.history.push("/adminApp" + destination)
+        } else if (role == "COACH") {
+            props.history.push("/coachApp/coachId=" + props.user.uid + "" + destination)
+        } else if (role == "SPORTSMAN") {
+            props.history.push("/sportsmanApp/userId=" + props.user.uid + "" + destination)
+        }
+    }
+
     return (
         <div className={classes.root}>
             <CssBaseline />
@@ -117,12 +148,14 @@ function MiniDrawer(props) {
                 })}
             >
                 <Toolbar>
-                    
-                    <div style={{display: "flex", flexDirection: "row", width: "100%"}}>
-                        <div style={{flexGrow: 1}}></div>
-                        <div>
-                            <IconButton><NotificationsRoundedIcon/></IconButton>
-                            <IconButton style={{marginLeft: 5}} onClick={()=>props.history.push("/adminApp/profile")}><AccountCircleIcon/></IconButton>
+
+                    <div style={{ display: "flex", flexDirection: "row", width: "100%" }}>
+                        <div style={{ flexGrow: 1 }}></div>
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                            <IconButton><NotificationsRoundedIcon /></IconButton>
+                            <Suspense fallback={null}>
+                                <IconButton onClick={() => openProfile()}><Avatar alt="User" src={props.user.photoURL} className={classes.avatar}>{props.user.name}</Avatar></IconButton>
+                            </Suspense>
                         </div>
                     </div>
 
@@ -148,30 +181,15 @@ function MiniDrawer(props) {
                         <ListItemText>LOGO</ListItemText>
                     </ListItem>
 
-                    <ListItem button>
-                        <ListItemIcon><MailIcon/></ListItemIcon>
-                        <ListItemText>Home</ListItemText>
-                    </ListItem>
+                    {props.menuItems.map((menuItem, index) => {
+                        return (
+                            <ListItem button key={index} onClick={() => handleMenuButtonClick(menuItem.path)}>
+                                <ListItemIcon><MailIcon /></ListItemIcon>
+                                <ListItemText>{menuItem.title}</ListItemText>
+                            </ListItem>
+                        )
+                    })}
 
-                    <ListItem button>
-                        <ListItemIcon><MailIcon/></ListItemIcon>
-                        <ListItemText>Console</ListItemText>
-                    </ListItem>
-
-                    <ListItem button>
-                        <ListItemIcon><MailIcon/></ListItemIcon>
-                        <ListItemText>Workouts</ListItemText>
-                    </ListItem>
-
-                    <ListItem button>
-                        <ListItemIcon><MailIcon/></ListItemIcon>
-                        <ListItemText>Diary</ListItemText>
-                    </ListItem>
-
-                    <ListItem button>
-                        <ListItemIcon><MailIcon/></ListItemIcon>
-                        <ListItemText>Goals</ListItemText>
-                    </ListItem>
                 </List>
                 <Divider />
 
@@ -183,9 +201,12 @@ function MiniDrawer(props) {
 
 
             </Drawer>
-            <main className={classes.content}>
+
+            <div className={classes.content}>
                 {props.children}
-            </main>
+            </div>
+
+
         </div>
     );
 }

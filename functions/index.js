@@ -63,3 +63,31 @@ exports.userDeleted = functions.auth.user().onDelete(user => {
 exports.userCreated = functions.auth.user().onCreate(user => {
     console.log("Email: " + user.email);
 })
+
+exports.getUserGeolocation = functions.https.onCall((data, context) => {
+    return admin.database().ref(data.uid+"/user-info/geolocation").once("value", snapshot => {
+        return snapshot.val()
+    })
+})
+
+exports.getAllUsers = functions.https.onCall((data, context) => {
+    return admin
+        .database()
+        .ref("/")
+        .once("value")
+        .then(snapshot => {
+            let uids = []
+            let obj = snapshot.val()
+            //let vals = Object.values(obj)
+            //functions.logger.info(vals, { structuredData: true });
+            functions.logger.info(obj, { structuredData: true });
+            let ids = Object.keys(obj)
+            var userList = Object.keys(obj).map(key => { return { name: obj[key]["user-info"].name, surname: obj[key]["user-info"].surname, uid: key, city: obj[key]["user-info"]["geolocation"].city, email: obj[key]["user-info"].email }})
+            userList.forEach(user => {
+                uids.push(user)
+            });
+            functions.logger.info(uids, { structuredData: true });
+
+            return uids
+        })
+})

@@ -1,0 +1,23 @@
+.App {
+  text-align: center;
+}
+
+.MuiDialog-paperScrollPaper{
+  min-height: 700px;
+}
+
+.fc-daygrid-day-events{
+  padding: 5px;
+}
+
+.fc-event-main{
+  font-size: 15px;
+  height: 50px;
+  padding: 10px;
+  text-align: center;
+}
+
+.fc-event-main i{
+  font-size: 20px;
+  line-height: 25px;
+}

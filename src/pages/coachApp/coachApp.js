@@ -49,7 +49,7 @@ function CoachApp(props) {
   const { coachId } = useParams();
   const classes = useStyles();
 
-  useEffect(() => {
+  /*useEffect(() => {
     //console.log("useEffect started")
     if (!isFirebaseInit) {
 
@@ -93,7 +93,7 @@ function CoachApp(props) {
 
       })
     }
-  }, [isFirebaseInit])
+  }, [isFirebaseInit])*/
 
 
 

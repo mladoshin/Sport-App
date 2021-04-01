@@ -1,3 +1,4 @@
+//page for the user's profile
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
@@ -7,13 +8,10 @@ import firebase from '../../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 import MiniDrawer from "../../components/navigation/desktopNavbar";
-import MobileNavbar from "../../components/navigation/mobileNavbar";
-import Navbar from "../../components/navigation/navbar";
 
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
-    padding: "30px 0px 0px 0px",
-    transition: "padding-left 230ms ease-out"
+    padding: "30px 0px 0px 0px"
   },
   gridItem: {
     padding: "1em"
@@ -48,17 +46,11 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-function AdminApp(props) {
+function SportsmanProfile(props) {
   const [isFirebaseInit, setIsFirebaseInit] = useState(false)
   const classes = useStyles();
-  const [openDrawer, setOpenDrawer] = useState(false)
-  const [users, setUsers] = useState([])
 
   useEffect(() => {
-    firebase.getAllUsers().then(res => setUsers(res.data))
-  }, [])
-
-  /*useEffect(() => {
     //console.log("useEffect started")
     if (!isFirebaseInit) {
 
@@ -73,7 +65,7 @@ function AdminApp(props) {
             .then((idTokenResult) => {
               //console.log(idTokenResult.claims.coach)
               if (idTokenResult.claims.role !== "ADMIN") {
-                throw new Error("No auth!")
+                //throw new Error("No auth!")
               }
               return idTokenResult.claims
             }).then((claims) => {
@@ -87,59 +79,41 @@ function AdminApp(props) {
                 claims: claims
               }
               console.log(userInfo)
-              props.setUser(userInfo)
-
+              console.log(props.user)
+              if(!props.user){
+                props.setUser(userInfo)
+              }
+              
+              
+              
             })
             .catch((error) => {
               console.log(error);
               props.history.replace("/404")
             });
-
         } else {
           //if user is not authorized
-
+          
           props.history.replace("/")
           alert("No Auth!")
         }
+
+
       })
     }
-  }, [isFirebaseInit])*/
-
-
-  console.log(props.user)
-  //console.log(array)
-
-  console.log(users)
-  var userList = users.map(user => {
-    return (
-      <div style={{ border: "1px solid black", marginTop: 20 }}>
-        <h1>Name: {user.name} {user.surname}</h1>
-        <h2>Email: {user.email} </h2>
-        <h3>City: {user.city} </h3>
-        <h3>ID: {user.uid}</h3>
-      </div>
-    )
-  })
+  }, [isFirebaseInit])
 
   return (
     <React.Fragment>
-      {/*<MiniDrawer open={openDrawer} setOpen={setOpenDrawer}/>*/}
-      {/*<Navbar/>*/}
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
-        <h1>Admin App</h1>
+        <h1>Sportsman Profile</h1>
         <Suspense fallback={null}>
-          <h3>Welcome, Admin!</h3>
+          <h3>{props.user.displayName}</h3>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
-
-
-        <button onClick={() => {
-          firebase.logout()
-          props.history.replace("/")
-        }}>Logout</button>
       </Container>
 
-      {userList}
+
 
     </React.Fragment>
 
@@ -148,16 +122,13 @@ function AdminApp(props) {
 
 const mapStateToProps = state => {
   return {
-    user: state.user,
-    mobile: state.isTouchable,
-    theme: state.theme
+    user: state.user
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
     setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj }),
-    setContentShift: (val) => dispatch({ type: "THEME/CONTENT_SHIFT", payload: val })
     //loadGoals: (arr) => dispatch({ type: "GOALS/LOAD", payload: arr }),
     //loadCategories: (arr) => dispatch({ type: "GOALS/CATEGORY/LOAD", payload: arr }),
     //loadAvatar: (url) => dispatch({ type: "AVATAR/LOAD", payload: url }),
@@ -165,4 +136,4 @@ const mapDispatchToProps = dispatch => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(AdminApp));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(SportsmanProfile));

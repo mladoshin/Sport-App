@@ -3,6 +3,7 @@ import 'firebase/auth'
 import 'firebase/storage'
 import 'firebase/database'
 import "firebase/functions"
+require("firebase/firestore");
 
 const firebaseConfig = {
   apiKey: "AIzaSyAo_UVgQnHQ3bkaGO6O4y5ZaF5oOyb67h0",
@@ -22,17 +23,19 @@ class Firebase {
     this.auth = firebase.auth()
     this.storage = firebase.storage()
     this.db = firebase.database()
+    this.firedDB = firebase.firestore()
     this.functions = firebase.functions();
 
     //do not call this function
     let addUserRole = this.functions.httpsCallable("addUserRole")
 
-    this.addCoachRole = (email) => addUserRole({email: email, role: "COACH"})
-    this.addAdminRole = (email) => addUserRole({email: email, role: "ADMIN"})
-    this.addSportsmanRole = (email) => addUserRole({email: email, role: "SPORTSMAN"})
+    this.addCoachRole = (email) => addUserRole({ email: email, role: "COACH" })
+    this.addAdminRole = (email) => addUserRole({ email: email, role: "ADMIN" })
+    this.addSportsmanRole = (email) => addUserRole({ email: email, role: "SPORTSMAN" })
 
     this.sayHello = this.functions.httpsCallable("sayHello")
     this.getUserIP = this.functions.httpsCallable("getUserIP")
+    this.getAllUsers = this.functions.httpsCallable("getAllUsers")
     //firebaseall.analytics()
   }
 
@@ -43,6 +46,47 @@ class Firebase {
     return this.auth.signOut()
   }
 
+  getCurrentUser(setUser) {
+    this.auth.onAuthStateChanged(function (user) {
+      if (user) {
+        // User is signed in.
+        console.log("User is signed in")
+        //console.log(user)
+
+        user.getIdTokenResult()
+          .then((idTokenResult) => {
+            return idTokenResult.claims
+          }).then((claims) => {
+            let userInfo = {
+              displayName: user.displayName,
+              email: user.email,
+              phoneNumber: user.phoneNumber,
+              emailVerified: user.emailVerified,
+              photoURL: user.photoURL,
+              uid: user.uid,
+              claims: claims
+            }
+            //console.log(userInfo)
+
+            return userInfo
+          }).then(userInfo => {
+            setUser(userInfo)
+
+          })
+          .catch((error) => {
+            console.log(error);
+            //props.history.replace("/404")
+          });
+
+
+      } else {
+        // No user is signed in.
+        console.log("User is NOT signed in!")
+        setUser({ id: null, auth: false })
+      }
+    });
+  }
+
   async register(name, surname, email, password) {
 
     await this.auth.createUserWithEmailAndPassword(email, password)
@@ -50,7 +94,7 @@ class Firebase {
         const user = firebase.auth().currentUser;
         user.sendEmailVerification();
       })
-    
+
     return this.auth.currentUser.updateProfile({
       displayName: name + " " + surname,
       userEmail: email
@@ -63,8 +107,8 @@ class Firebase {
     })
   }
 
-  isCoach(id, setIsCoach){
-    var starCountRef = this.db.ref(id+"/user-info/").orderByKey();
+  isCoach(id, setIsCoach) {
+    var starCountRef = this.db.ref(id + "/user-info/").orderByKey();
     starCountRef.on('value', function (snapshot) {
       console.log(snapshot.val())
       setIsCoach(snapshot.val().isCoach)
@@ -72,7 +116,7 @@ class Firebase {
 
   }
 
-  updateUserProfile(props){
+  updateUserProfile(props) {
     this.db.ref(this.getCurrentUserId() + "/general").update({
       name: props.name ? props.name : null,
       photoUrl: props.photoUrl ? props.photoUrl : null
@@ -199,7 +243,7 @@ class Firebase {
         currentValue: result,
         currentRepsValue: currentRepsValue ? currentRepsValue : null
       });
-      
+
     } catch (err) {
       alert(err.message)
     }
@@ -226,8 +270,8 @@ class Firebase {
     }
   }
 
-  checkUser(id, type){
-    if (this.auth.currentUser.emailVerified && type=="VERIFICATION"){
+  checkUser(id, type) {
+    if (this.auth.currentUser.emailVerified && type == "VERIFICATION") {
       this.removeNotification(id, "VERIFIED")
     }
   }
@@ -235,7 +279,7 @@ class Firebase {
   loadNotifications(loadNotificationsToRedux) {
     console.log("Running firebase.loadNotifications!")
     console.log(this.getCurrentUserId())
-    var starCountRef = this.db.ref("/"+this.getCurrentUserId() + "/notifications/").orderByKey().limitToLast(100);
+    var starCountRef = this.db.ref("/" + this.getCurrentUserId() + "/notifications/").orderByKey().limitToLast(100);
 
     starCountRef.on('value', function (snapshot) {
       var notificationItems = [] //local temp variable
@@ -246,14 +290,14 @@ class Firebase {
       snapshot.forEach(function (snapItem) {
         var item = snapItem.val()
         item.id = identificators[i]
-        
+
         notificationItems.push(item)
         i++
       });
-      
+
       console.log(notificationItems)
-      
-      
+
+
 
       //goalCategories = Array.from(new Set(goalCategories))
       //load json of all photos from database into redux state
@@ -269,10 +313,8 @@ class Firebase {
     }
   }
 
-  removeNotification(notificationId, type)
-  {
-    if (type !== "VERIFICATION")
-    {
+  removeNotification(notificationId, type) {
+    if (type !== "VERIFICATION") {
       try {
         this.db.ref(this.getCurrentUserId() + "/notifications/" + notificationId).remove()
       } catch (err) {
@@ -281,9 +323,11 @@ class Firebase {
     }
   }
 
-  uploadAvatarToStorage(avatar, loadAvatar) {
+
+
+  uploadAvatarToStorage(avatar, updateAvatarState) {
     const uploadTask = this.storage.ref(this.getCurrentUserId() + "/avatar/avatar.jpg").put(avatar)
-    uploadTask.on("state_changed",
+    return uploadTask.on("state_changed",
       snapshot => {
 
       },
@@ -292,7 +336,7 @@ class Firebase {
         console.log(error.message)
       },
       () => {
-        this.storage
+        return this.storage
           .ref(this.getCurrentUserId() + "/avatar/")
           .child("avatar.jpg")
           .getDownloadURL()
@@ -300,13 +344,324 @@ class Firebase {
             this.auth.currentUser.updateProfile({
               photoURL: avatarUrl
             })
-            this.updateUserProfile({photoUrl: avatarUrl})
-            loadAvatar(avatarUrl)
+            //this.updateUserProfile({photoUrl: avatarUrl})
+            //loadAvatar(avatarUrl)
+            return avatarUrl
+          }).then(url => {
+            updateAvatarState(url)
+            console.log("The avatar has been uploaded!")
+            return url
           })
       }
     )
   }
 
+
+  //FUNCTIONS FOR WORKOUT BUILDER (START)
+  addWorkout(userId, date, name) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("workouts").add({
+      name: name,
+      date: date,
+      timestamp: Date.now()
+    })
+  }
+
+  //addCircuitToWorkout(userId, workoutId, circuitId, circuits){
+  //    this.firedDB.collection("users").doc(userId).collection("workouts").doc(workoutId).update({
+  //       circuits: [...circuits, circuitId]
+  //    })
+  //}
+
+  addCircuit(userId, circuit, workoutId) {
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("circuits").add({
+      name: circuit.name,
+      iterNum: circuit.iterNum,
+      exercises: [],
+      workoutId: workoutId,
+      timestamp: Date.now()
+    }).then(docRef => {
+      return docRef.id
+    })
+  }
+
+  getExercises(userId, circuitId, setExercises) {
+    console.log("circuitId = " + circuitId)
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("exercises").where("circuitId", "==", circuitId)
+      .onSnapshot((snapshot) => {
+
+        let list = []
+        snapshot.forEach(snap => {
+          let exercise = snap.data()
+          exercise.id = snap.id
+          list.push(exercise)
+        })
+        setExercises(list)
+      });
+  }
+
+  addExerciseToCircuit(userId, circuitId, exercise, exercises) {
+    console.log(exercises)
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("circuits").doc(circuitId).update({
+      exercises: [...exercises, exercise]
+    })
+  }
+
+  addExercise(userId, exercise, circuitId) {
+    console.log("Adding ne exercise to curcuit with Id:" + circuitId)
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("exercises").add({
+      name: exercise.name,
+      circuitId: circuitId,
+      repsNumber: exercise.repsNumber
+    }).then(docRef => {
+      return docRef.id
+    })
+  }
+
+  getWorkouts(userId, date, setWorkouts) {
+    this.firedDB.collection("users").doc(userId).collection("workouts").orderBy("timestamp", "asc")
+      .onSnapshot((snapshot) => {
+
+        let list = []
+        snapshot.forEach(snap => {
+          let workout = snap.data()
+          workout.id = snap.id
+          list.push(workout)
+        })
+        setWorkouts(list)
+      });
+  }
+
+  deleteWorkout(userId, workoutId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("workouts").doc(workoutId).delete()
+  }
+
+  deleteExercise(userId, exerciseId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("exercises").doc(exerciseId).delete()
+  }
+
+  deleteCircuit(userId, exercises, circuitId) {
+    console.log(exercises)
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("circuits").doc(circuitId).delete().then(() => {
+      exercises.forEach((exercise, index) => this.deleteExercise(userId, exercise.id))
+    })
+  }
+
+
+
+  getCircuits(userId, workoutId, setCircuits) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("circuits").where("workoutId", "==", workoutId).orderBy("timestamp", "asc")
+      .onSnapshot((snapshot) => {
+
+        let list = []
+        snapshot.forEach(snap => {
+          let circuit = snap.data()
+          circuit.id = snap.id
+          list.push(circuit)
+        })
+        setCircuits(list)
+        console.log("List of circuits for workout" + workoutId)
+        console.log(list)
+      });
+  }
+  //FUNCTIONS FOR WORKOUT BUILDER (END)
+
+
+  
+  //<------------------------------------FUNCTIONS FOR TODOS-CALENDAR (START)------------------------------------------>
+
+  getDayContent(userId, dayId, date, setDayContent) {
+    return this.firedDB.collection("users").doc(userId).collection("daily-todos")
+      .onSnapshot((snapshot) => {
+        let daysList = []
+        snapshot.forEach((doc, index) => {
+          let day = {
+            title: doc.data().name,
+            start: doc.data().date,
+            allDay: true,
+            id: doc.id,
+            completedHabits: doc.data().completedHabits
+          }
+          daysList.push(day)
+        })
+        setDayContent(daysList)
+      });
+  }
+
+  deleteDay(userId, date, dateId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("daily-todos").doc(dateId)
+      .delete()
+      .then(() => console.log("Day Event was successfully deleted!"))
+      .then(() => {
+        this.getTodosForDeletion(userId, date).then(res => this.deleteTodos(userId, res))
+      })
+      .catch(err => console.log(err))
+  }
+
+  completeTodo(userId, todoId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").doc(todoId).update({
+      completed: true
+    })
+      .then(() => console.log("Todo " + todoId + " has been completed!"))
+      .catch(err => console.log(err))
+  }
+
+  uncompleteTodo(userId, todoId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").doc(todoId).update({
+      completed: false
+    })
+      .then(() => console.log("Todo " + todoId + " has been completed!"))
+      .catch(err => console.log(err))
+  }
+
+  deleteTodos(userId, array) {
+    array.forEach((id, index) => {
+      this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").doc(id).delete()
+        .then(() => console.log("ToDo " + id + " has been deleted!"))
+        .catch(err => console.log(err))
+    })
+  }
+
+  getTodosForDeletion(userId, date) {
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").where("date", "==", date)
+      .get()
+      .then((snapshot) => {
+        let idList = []
+        snapshot.forEach((doc, index) => {
+          idList.push(doc.id)
+        })
+        return idList
+      })
+      .then(res => { return res })
+  }
+  updateDayContentName(userId, dateId, newName) {
+    console.log(dateId)
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("daily-todos").doc(dateId).update({
+      name: newName
+    })
+      .then(() => console.log("Your day name was successfully updated!"))
+      .catch(err => console.log(err))
+  }
+
+  isDayContentEmpty(userId, dayId, date) {
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("daily-todos").where("date", "==", date)
+      .get()
+      .then((snapshot) => {
+        if (snapshot.empty) {
+          console.log("The day is empty!")
+          return true
+        } else {
+          console.log("The day is NOT empty!")
+          return false
+        }
+      }).then(res => { return res })
+  }
+
+  getTodos(userId, date, setToDos) {
+    return this.firedDB.collection("users").doc(userId).collection("todos-content").where("date", "==", date).orderBy("timestamp", "asc")
+      .onSnapshot((snapshot) => {
+        let todos = []
+        snapshot.forEach((todo, index) => {
+          let todoItem = {
+            name: todo.data().name,
+            date: todo.data().date,
+            completed: todo.data().completed,
+            id: todo.id
+          }
+          todos.push(todoItem)
+        })
+        setToDos(todos)
+      });
+  }
+
+  addTodo(userId, payload) {
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").add(payload)
+      .then((docRef) => {
+        return docRef.id
+      })
+  }
+
+  addHabit(userId, payload) {
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").add(payload)
+      .then((docRef) => {
+        return docRef.id
+      })
+  }
+
+  getHabits(userId, setHabits) {
+    return this.firedDB.collection("users").doc(userId).collection("habits")
+      .onSnapshot((snapshot) => {
+        let habits = []
+        snapshot.forEach((habit, index) => {
+          let habitItem = {
+            name: habit.data().name,
+            startDate: habit.data().startDate,
+            type: habit.data().type,
+            id: habit.id,
+            days: habit.data().days ? habit.data().days : null
+          }
+          console.log(habit)
+          habits.push(habitItem)
+        })
+        setHabits(habits)
+      });
+  }
+
+  changeCompletedHabits(userId, dateId, oldQuantity, val) {
+    let newQuantity = oldQuantity + val
+    this.firedDB.collection("users").doc(userId).collection("daily-todos").doc(dateId).update({
+      completedHabits: newQuantity
+    })
+      .then(() => console.log("Your day name was successfully updated!"))
+      .catch(err => console.log(err))
+  }
+
+
+  completeHabit(userId, date, habitId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").doc(habitId).collection("progress").add({
+      date: date
+    })
+      .then(() => console.log("Habit " + habitId + " has been completed!"))
+      .catch(err => console.log(err))
+  }
+
+  uncompleteHabit(userId, date, habitId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").doc(habitId).collection("progress").where("date", "==", date).get()
+      .then(snapshot => {
+        console.log(snapshot.docs[0].id)
+        this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").doc(habitId).collection("progress").doc(snapshot.docs[0].id).delete().catch(err => console.log(err))
+      })
+      .then(() => console.log("Habit " + habitId + " has been uncompleted!"))
+      .catch(err => console.log(err))
+  }
+
+  getHabitStatusForDate(userId, habitId, date, setChecked) {
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").doc(habitId).collection("progress").where("date", "==", date)
+      .onSnapshot((snapshot) => {
+        setChecked(!snapshot.empty)
+      })
+  }
+
+  addDayContent(userId, dayId, payload) {
+
+    this.isDayContentEmpty(userId, dayId, payload.date)
+      .then(res => {
+        if (res) {
+
+          return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("daily-todos").add(payload)
+            .then((docRef) => {
+              return docRef.id
+            })
+
+        } else {
+          alert("Data alredy exists!")
+          return false
+        }
+      }).then(res => {
+        return res
+      })
+  }
+
+  //FUNCTIONS FOR TODOS-CALENDAR (END)
 
 }
 

@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from "react"
+import { connect } from 'react-redux'
 import {Paper, Typography, CssBaseline} from '@material-ui/core'
 import { Container } from '@material-ui/core';
 import {withRouter} from "react-router-dom"
@@ -21,4 +22,18 @@ function HomePage(props){
     );
 }
 
-export default withRouter(HomePage);
+const mapStateToProps = state => {
+    return {
+      user: state.user
+    }
+  }
+  
+  /*const mapDispatchToProps = dispatch => {
+    return {
+      setIsTouchable: (val) => dispatch({ type: "ISTOUCHABLE/SET", payload: val }),
+      setTheme: (theme) => dispatch({ type: "THEME/CHANGE", payload: theme }),
+      setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj })
+    }
+  }*/
+
+export default connect(mapStateToProps, null)(withRouter(HomePage));

@@ -49,7 +49,7 @@ function SignInPage(props) {
       .then(ugeo => checkIP(ugeo))
       .catch(error => console.log(error))
     } else {
-      //alert("Sign out before signing in!")
+      alert("Sign out before signing in!")
       console.log(firebase.auth.currentUser)
       redirectToApp()
       //props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
@@ -58,7 +58,7 @@ function SignInPage(props) {
 
   //function which checks if the user is coach or sportsman and redirects to the right app
   function redirectToApp() {
-    
+    console.log(firebase.auth.currentUser)
     firebase.auth.currentUser.getIdTokenResult()
       .then((idTokenResult) => {
         //display the custom claim

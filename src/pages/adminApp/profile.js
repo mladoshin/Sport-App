@@ -46,8 +46,9 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-function UserProfile(props) {
+function AdminProfile(props) {
   const [isFirebaseInit, setIsFirebaseInit] = useState(false)
+  const [openDrawer, setOpenDrawer] = useState(false)
   const classes = useStyles();
 
   useEffect(() => {
@@ -105,6 +106,7 @@ function UserProfile(props) {
 
   return (
     <React.Fragment>
+      
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
         <h1>Admin Profile</h1>
         <Suspense fallback={null}>
@@ -136,4 +138,4 @@ const mapDispatchToProps = dispatch => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(UserProfile));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(AdminProfile));
