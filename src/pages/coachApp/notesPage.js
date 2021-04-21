@@ -1,4 +1,4 @@
-//<-----------------------CALENDAR PAGE----------------------->//
+//<-----------------------NOTES PAGE----------------------->//
 import React from "react"
 import { connect } from "react-redux"
 import { Container, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
@@ -10,7 +10,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
 import AddIcon from '@material-ui/icons/Add';
 
-import TodoCalendar from "../dailyTodos/App"
+import NoteComponent from "../notes/App"
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -54,19 +54,45 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-function CalendarPage(props) {
+function NotesPage(props) {
     const classes = useStyles();
     return (
         <>
-            <Container className={classes.mainContainer} maxWidth="xl">
-                <h1>Calendar Page</h1>
-                <TodoCalendar/>
-                
+            <Container className={classes.mainContainer}>
+                <h1>Notes Page</h1>
+
+                <div style={{ height: 45 }}>
+                    <TextField id="outlined-basic" label="Search for workouts" variant="outlined" style={{ height: "100%" }}
+                        inputProps={{
+                            style: {
+                                height: 45,
+                                boxSizing: "border-box"
+                            }
+                        }}
+                        InputLabelProps={{
+                            style: {
+                                top: -6
+
+                            },
+                        }}
+                    />
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        className={classes.searchBtn}
+                        startIcon={<SearchRoundedIcon />}
+                    >
+                        Search
+                </Button>
+                </div>
+
+                <NoteComponent/>
 
             </Container>
 
+            
         </>
     )
 }
 
-export default CalendarPage;
+export default NotesPage;

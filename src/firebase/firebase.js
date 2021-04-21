@@ -5,6 +5,8 @@ import 'firebase/database'
 import "firebase/functions"
 require("firebase/firestore");
 
+
+//firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAo_UVgQnHQ3bkaGO6O4y5ZaF5oOyb67h0",
   authDomain: "sport-app-16c82.firebaseapp.com",
@@ -26,26 +28,188 @@ class Firebase {
     this.firedDB = firebase.firestore()
     this.functions = firebase.functions();
 
-    //do not call this function
+    //do NOT call this function from outside Firebase class
     let addUserRole = this.functions.httpsCallable("addUserRole")
 
+    //function to add user a COACH role
     this.addCoachRole = (email) => addUserRole({ email: email, role: "COACH" })
+
+    //function to add user a ADMIN role
     this.addAdminRole = (email) => addUserRole({ email: email, role: "ADMIN" })
+
+    //function to add user a SPORTSMAN role
     this.addSportsmanRole = (email) => addUserRole({ email: email, role: "SPORTSMAN" })
 
-    this.sayHello = this.functions.httpsCallable("sayHello")
+    //this.sayHello = this.functions.httpsCallable("sayHello")
     this.getUserIP = this.functions.httpsCallable("getUserIP")
-    this.getAllUsers = this.functions.httpsCallable("getAllUsers")
+
+    let getUserByEmail = this.functions.httpsCallable("getUserByEmail")
+    this.getUserByEmail = (email) => getUserByEmail({email})
+
+    //this.getAllUsers = this.functions.httpsCallable("getAllUsers")
     //firebaseall.analytics()
   }
 
+  //function for logging the user in
   login(email, password) {
     return this.auth.signInWithEmailAndPassword(email, password)
   }
+
+  //function to log the user out
   logout() {
     return this.auth.signOut()
   }
 
+
+  //function for getting all existing users with options(user's role)
+  getAllUsers(options, setUsers) {
+    if (options.role !== "ALL") {
+      this.firedDB.collection("users").where("role", "==", options.role).get()
+        .then((snapshot) => {
+
+          let userList = []
+          snapshot.forEach(snap => {
+            let user = snap.data()
+            user.id = snap.id
+            userList.push(user)
+          })
+          setUsers(userList)
+        });
+    } else {
+      this.firedDB.collection("users").get()
+        .then((snapshot) => {
+
+          let userList = []
+          snapshot.forEach(snap => {
+            let user = snap.data()
+            user.id = snap.id
+            userList.push(user)
+          })
+          setUsers(userList)
+        });
+    }
+
+  }
+
+  //function for updating user's preferences in firebase firestore
+  updateUserPreferences(updates) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("private").doc("preferences").update(updates)
+      .then(() => console.log("User's preferences have successfully updated!"))
+      .catch(err => console.log(err))
+  }
+
+
+  //<-----------------------FUNCTIONS FOR NOTES PAGE (START)----------------------->//
+
+  //function for adding new note to firebase firestore
+  addNote(note) {
+    console.log("adding note...")
+    console.log(note)
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("notes").add(note)
+      .then((docRef) => {
+        console.log("New note with id " + docRef.id + " has been added!")
+        this.addNoteThumb(note, docRef.id)
+      })
+      .catch(err => console.log(err))
+  }
+
+  //function for deleting the user's note with particular noteIf from firebase firestore
+  deleteNote(noteId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("notes").doc(noteId).delete()
+      .then(() => {
+        console.log("New note with id " + noteId + " has been deleted!")
+        this.deleteNoteThumb(noteId)
+      })
+      .catch(err => console.log(err))
+  }
+
+  //function for deleting the note-thumbnail with particular noteId from firebase firestore    P.S -> could be done with firebase functions!
+  deleteNoteThumb(noteId) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("note-thumbs").doc(noteId).delete()
+      .then(() => {
+        console.log("note thumb with id " + noteId + " has been deleted!")
+      })
+      .catch(err => console.log(err))
+  }
+
+  //function for adding the note thumbnail (shortcut) to user's database (firebase firestore)    P.S -> could be done with firebase functions!
+  addNoteThumb(note, noteId) {
+    let noteThumb = {
+      title: note.title,
+      dateCreated: note.dateCreated
+    }
+    //console.log(noteThumb)
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("note-thumbs").doc(noteId).set(noteThumb)
+      .catch(err => console.log(err))
+  }
+
+
+  //updating the note thumbnail (shortcut) with particular noteId in user's database (firebase firestore).   P.S -> could be done with firebase functions!
+  updateNoteThumb(noteId, updates) {
+    console.log("Updates in note-thumbs")
+    console.log(updates)
+    if (updates) {
+      this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("note-thumbs").doc(noteId).update(updates)
+        .catch(err => console.log(err))
+    }
+
+  }
+
+  //function for updating the user's note in firebase-firestore
+  updateNote(noteId, updates) {
+    //console.log(noteId, updates)
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("notes").doc(noteId).update(updates)
+      .catch(err => console.log(err))
+
+    let thumbUpdates = updates.title ? { title: updates.title } : null
+    this.updateNoteThumb(noteId, thumbUpdates)
+  }
+
+  //function for getting the user's single note data from firebase firestore
+  getNote(uid, noteId, setNote) {
+    //console.log(uid, noteId)
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("notes").doc(noteId)
+      .onSnapshot((snapshot) => {
+        if (!snapshot.empty) {
+          setNote(snapshot.data().data)
+        }
+
+      });
+  }
+
+  //function for getting all user's note thumbnails (shortcuts) from firebase firestore, this doesn't include the actual note data!
+  getUserNoteThumbs(uid, setNotes) {
+    return this.firedDB.collection("users").doc(uid).collection("note-thumbs")
+      .onSnapshot((snapshot) => {
+        let notesList = []
+        snapshot.forEach((snap, index) => {
+          let note = snap.data()
+          note.id = snap.id
+          notesList.push(note)
+        })
+        setNotes(notesList)
+
+      });
+  }
+
+  //<-----------------------FUNCTIONS FOR NOTES PAGE (START)----------------------->//
+
+  //function for getting user's preferences from firebase firestore
+  getCurrentUserPreferences(setPreferences) {
+    if (this.getCurrentUserId()) {
+      return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("private").doc("preferences")
+        .onSnapshot((snapshot) => {
+          console.log(snapshot.empty)
+          if (!snapshot.empty) {
+            setPreferences(snapshot.data())
+          }
+
+        });
+    }
+
+  }
+
+  //listener for auth state changes and sets the redux user state to current user (with custom claims)
   getCurrentUser(setUser) {
     this.auth.onAuthStateChanged(function (user) {
       if (user) {
@@ -87,6 +251,7 @@ class Firebase {
     });
   }
 
+  //function for registering a new user
   async register(name, surname, email, password) {
 
     await this.auth.createUserWithEmailAndPassword(email, password)
@@ -95,45 +260,38 @@ class Firebase {
         user.sendEmailVerification();
       })
 
+    //update user's auth profile
     return this.auth.currentUser.updateProfile({
       displayName: name + " " + surname,
       userEmail: email
     })
   }
 
+  //function for updating the currrent user's profileURL (only in firebase auth state, NOT in database)
   updateUserProfileUrl(url) {
     return this.auth.currentUser.updateProfile({
       photoURL: url
     })
   }
 
-  isCoach(id, setIsCoach) {
-    var starCountRef = this.db.ref(id + "/user-info/").orderByKey();
-    starCountRef.on('value', function (snapshot) {
-      console.log(snapshot.val())
-      setIsCoach(snapshot.val().isCoach)
-    })
-
-  }
-
-  updateUserProfile(props) {
-    this.db.ref(this.getCurrentUserId() + "/general").update({
-      name: props.name ? props.name : null,
-      photoUrl: props.photoUrl ? props.photoUrl : null
-    })
-  }
-
+  //function for getting current user's displayName (from firebase auth state)
   getCurrentUserName() {
     return this.auth.currentUser && this.auth.currentUser.displayName
   }
+
+  //function for getting current user's id (from firebase auth state)
   getCurrentUserId() {
     return this.auth.currentUser && this.auth.currentUser.uid
   }
+
+  //function-listener that listens for firebase service to initialise 
   isInit() {
     return new Promise(resolve => {
       this.auth.onAuthStateChanged(resolve)
     })
   }
+
+  //function for resetting user's password (send an reset email)
   resetUserPassword(e, email) {
     e.preventDefault();
     this.auth.sendPasswordResetEmail(email).then(() => this.redirect(email)).catch(function (error) {
@@ -142,6 +300,7 @@ class Firebase {
     });
   }
 
+  //function for redirecting the user to mailbox 
   redirect(email) {
     this.logout()
     sessionStorage.setItem("Auth", false)
@@ -156,6 +315,7 @@ class Firebase {
     console.log("email sent")
   }
 
+  //<-----------------------FUNCTIONS FOR GOAL TRACKER (START)----------------------->//
   loadUserGoals(loadGoalItems, loadCategories) {
     var starCountRef = this.db.ref(this.getCurrentUserId() + "/goals/").orderByKey();
     starCountRef.on('value', function (snapshot) {
@@ -270,12 +430,24 @@ class Firebase {
     }
   }
 
+  deleteGoal(goalId) {
+    try {
+      this.db.ref(this.getCurrentUserId() + "/goals/" + goalId).remove()
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  //<-----------------------FUNCTIONS FOR GOAL TRACKER (END)----------------------->// P.S. -> NOT WORKING YET!
+
+  //function for checking if the user has verified his email
   checkUser(id, type) {
     if (this.auth.currentUser.emailVerified && type == "VERIFICATION") {
       this.removeNotification(id, "VERIFIED")
     }
   }
 
+  //<-----------------------FUNCTIONS FOR NOTIFICATIONS (START)----------------------->//  P.S. -> NOT WORKING YET!
   loadNotifications(loadNotificationsToRedux) {
     console.log("Running firebase.loadNotifications!")
     console.log(this.getCurrentUserId())
@@ -305,14 +477,6 @@ class Firebase {
     });
   }
 
-  deleteGoal(goalId) {
-    try {
-      this.db.ref(this.getCurrentUserId() + "/goals/" + goalId).remove()
-    } catch (err) {
-      alert(err.message)
-    }
-  }
-
   removeNotification(notificationId, type) {
     if (type !== "VERIFICATION") {
       try {
@@ -323,8 +487,10 @@ class Firebase {
     }
   }
 
+  //<-----------------------FUNCTIONS FOR NOTIFICATIONS (END)----------------------->//
 
 
+  //function for uploading user's avatar to firebase storage
   uploadAvatarToStorage(avatar, updateAvatarState) {
     const uploadTask = this.storage.ref(this.getCurrentUserId() + "/avatar/avatar.jpg").put(avatar)
     return uploadTask.on("state_changed",
@@ -344,7 +510,7 @@ class Firebase {
             this.auth.currentUser.updateProfile({
               photoURL: avatarUrl
             })
-            //this.updateUserProfile({photoUrl: avatarUrl})
+            this.updateUserProfile(avatarUrl)
             //loadAvatar(avatarUrl)
             return avatarUrl
           }).then(url => {
@@ -356,8 +522,13 @@ class Firebase {
     )
   }
 
+  updateUserProfile(avatarUrl) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).update({ photoURL: avatarUrl }).catch(err => console.log(err))
+  }
 
-  //FUNCTIONS FOR WORKOUT BUILDER (START)
+
+  //<-----------------------FUNCTIONS FOR WORKOUT BUILDER (START)----------------------->//
+
   addWorkout(userId, date, name) {
     this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("workouts").add({
       name: name,
@@ -386,7 +557,7 @@ class Firebase {
 
   getExercises(userId, circuitId, setExercises) {
     console.log("circuitId = " + circuitId)
-    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("exercises").where("circuitId", "==", circuitId)
+    return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("exercises").where("circuitId", "==", circuitId)
       .onSnapshot((snapshot) => {
 
         let list = []
@@ -446,8 +617,6 @@ class Firebase {
     })
   }
 
-
-
   getCircuits(userId, workoutId, setCircuits) {
     this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("circuits").where("workoutId", "==", workoutId).orderBy("timestamp", "asc")
       .onSnapshot((snapshot) => {
@@ -463,12 +632,14 @@ class Firebase {
         console.log(list)
       });
   }
-  //FUNCTIONS FOR WORKOUT BUILDER (END)
+
+  //<-----------------------FUNCTIONS FOR WORKOUT BUILDER (END)----------------------->//
 
 
-  
+
   //<------------------------------------FUNCTIONS FOR TODOS-CALENDAR (START)------------------------------------------>
 
+  //function for getting single day content form firebase firestore
   getDayContent(userId, dayId, date, setDayContent) {
     return this.firedDB.collection("users").doc(userId).collection("daily-todos")
       .onSnapshot((snapshot) => {
@@ -487,16 +658,18 @@ class Firebase {
       });
   }
 
+  //function for deleting single day content form firebase firestore, and deleting all Todos for this day as well
   deleteDay(userId, date, dateId) {
     this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("daily-todos").doc(dateId)
       .delete()
       .then(() => console.log("Day Event was successfully deleted!"))
       .then(() => {
+        //delete all todos for this day
         this.getTodosForDeletion(userId, date).then(res => this.deleteTodos(userId, res))
       })
       .catch(err => console.log(err))
   }
-
+  //function for completing the todo with unique todoId
   completeTodo(userId, todoId) {
     this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").doc(todoId).update({
       completed: true
@@ -505,6 +678,7 @@ class Firebase {
       .catch(err => console.log(err))
   }
 
+  //function for uncompleting the todo with unique todoId
   uncompleteTodo(userId, todoId) {
     this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").doc(todoId).update({
       completed: false
@@ -513,6 +687,7 @@ class Firebase {
       .catch(err => console.log(err))
   }
 
+  //function for deleting the list of todos, each with unique todoId
   deleteTodos(userId, array) {
     array.forEach((id, index) => {
       this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").doc(id).delete()
@@ -521,6 +696,7 @@ class Firebase {
     })
   }
 
+  //function for getting all the todos for particular day, which is being deleted
   getTodosForDeletion(userId, date) {
     return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").where("date", "==", date)
       .get()
@@ -533,6 +709,8 @@ class Firebase {
       })
       .then(res => { return res })
   }
+
+  //function for updating Day name in firebase firestore
   updateDayContentName(userId, dateId, newName) {
     console.log(dateId)
     this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("daily-todos").doc(dateId).update({
@@ -542,6 +720,7 @@ class Firebase {
       .catch(err => console.log(err))
   }
 
+  //function which checks if the DAY is EMPTY from any content and returneither true or false
   isDayContentEmpty(userId, dayId, date) {
     return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("daily-todos").where("date", "==", date)
       .get()
@@ -556,6 +735,7 @@ class Firebase {
       }).then(res => { return res })
   }
 
+  //function for fetching all the todos for particular date from firebase firestore
   getTodos(userId, date, setToDos) {
     return this.firedDB.collection("users").doc(userId).collection("todos-content").where("date", "==", date).orderBy("timestamp", "asc")
       .onSnapshot((snapshot) => {
@@ -573,6 +753,7 @@ class Firebase {
       });
   }
 
+  //function which adds new todo to firebase firestore
   addTodo(userId, payload) {
     return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("todos-content").add(payload)
       .then((docRef) => {
@@ -580,13 +761,15 @@ class Firebase {
       })
   }
 
-  addHabit(userId, payload) {
+  //function which adds new habit to firebase firestore
+  addHabit(payload) {
     return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").add(payload)
       .then((docRef) => {
         return docRef.id
       })
   }
 
+  //function for fetching all the user's habits
   getHabits(userId, setHabits) {
     return this.firedDB.collection("users").doc(userId).collection("habits")
       .onSnapshot((snapshot) => {
@@ -606,6 +789,7 @@ class Firebase {
       });
   }
 
+  //function for changing the number of completed habits in a day
   changeCompletedHabits(userId, dateId, oldQuantity, val) {
     let newQuantity = oldQuantity + val
     this.firedDB.collection("users").doc(userId).collection("daily-todos").doc(dateId).update({
@@ -615,7 +799,7 @@ class Firebase {
       .catch(err => console.log(err))
   }
 
-
+  //function for completing the habit with unique habitId for particular date
   completeHabit(userId, date, habitId) {
     this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").doc(habitId).collection("progress").add({
       date: date
@@ -624,6 +808,7 @@ class Firebase {
       .catch(err => console.log(err))
   }
 
+  //function for uncompleting the habit with unique habitId for particular date
   uncompleteHabit(userId, date, habitId) {
     this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").doc(habitId).collection("progress").where("date", "==", date).get()
       .then(snapshot => {
@@ -634,6 +819,7 @@ class Firebase {
       .catch(err => console.log(err))
   }
 
+  //function for fetching the single habit completed status (if it is completed or not on particular date)
   getHabitStatusForDate(userId, habitId, date, setChecked) {
     return this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("habits").doc(habitId).collection("progress").where("date", "==", date)
       .onSnapshot((snapshot) => {
@@ -641,6 +827,7 @@ class Firebase {
       })
   }
 
+  //function for adding day content on given date
   addDayContent(userId, dayId, payload) {
 
     this.isDayContentEmpty(userId, dayId, payload.date)
@@ -661,8 +848,361 @@ class Firebase {
       })
   }
 
-  //FUNCTIONS FOR TODOS-CALENDAR (END)
+  //<-----------------------FUNCTIONS FOR TODOS-CALENDAR (END)----------------------->//
 
+
+  //<-----------------------FUNCTIONS FOR TRAINING GROUPS (START)----------------------->//
+
+  addTrainingGroup(payload, coachId, membersId, members) {
+
+    this.firedDB.collection("training-groups").add(payload)
+      .then((docRef) => {
+        //adding new group shortcut to coach (can be done using firebase functions)
+        this.addTrainingGroupToCoach({ name: payload.name, dateCreated: payload.dateCreated, isPrivate: payload.isPrivate, members: membersId }, coachId, docRef.id)
+        this.addMembersToTrainingGroup(docRef.id, members)
+      })
+  }
+
+  //only for owners
+  updateTrainingGroupInfo(updates, groupId){
+    this.firedDB.collection("training-groups").doc(groupId).update(updates).catch(err => console.log(err))
+  }
+
+  getUserProfilePhotoURL(members, setMemberPhotoURLS) {
+    let memberIds = members.map(member => {return member.uid})
+    console.log("memberIds")
+    console.log(members)
+    this.firedDB.collection("users").where(firebase.firestore.FieldPath.documentId(),"in", memberIds).get().then(snapshot => {
+      let members = []
+      snapshot.forEach((member) => {
+        members.push(member.get("photoURL"))
+      })
+      setMemberPhotoURLS(members)
+    })
+  }
+
+  getAllMembersInTrainingGroup(groupId, setMembers) {
+    this.firedDB.collection("training-groups").doc(groupId).collection("members")
+      .onSnapshot((snapshot) => {
+        let members = []
+        snapshot.forEach((member, index) => {
+          let memberItem = member.data()
+          memberItem.uid = member.id
+          members.push(memberItem)
+        })
+        setMembers(members)
+      });
+  }
+
+  getUserTrainingGroups(uid, setGroups){
+    this.firedDB.collection("training-groups").where("members", "array-contains", uid)
+      .onSnapshot((snapshot) => {
+        let groups = []
+        snapshot.forEach((group, index) => {
+          let groupItem = group.data()
+          groupItem.groupId = group.id
+          groups.push(groupItem)
+        })
+        setGroups(groups)
+      });
+  }
+
+  //function for applying to private training groups
+  applyToTrainingGroup(groupId, userId, user){
+    this.firedDB.collection("training-groups").doc(groupId).collection("applicants").doc(userId).set(user).catch(err => console.log(err))
+  }
+
+
+  getAllApplicantsFromTrainingGroup(groupId, setRequests){
+    return this.firedDB.collection("training-groups").doc(groupId).collection("applicants").orderBy("applicationDate", "desc")
+    .onSnapshot(snapshot => {
+      let res = []
+      snapshot.forEach((snap, index) => {
+        res.push({...snap.data(), uid: snap.id})
+      })
+      setRequests(res)
+    })
+  }
+
+  removeApplicantFromTrainingGroup(groupId, userId){
+    this.firedDB.collection("training-groups").doc(groupId).collection("applicants").doc(userId).delete().catch(err => console.log(err))
+  }
+
+
+
+  addMembersToTrainingGroup(groupId, members) {
+    members.forEach((member) => {
+      console.log(member)
+      let addedMember = {
+        name: member.name,
+        surname: member.surname,
+        photoURL: member.photoURL,
+        dateJoined: Date.now(),
+        role: member.role
+      }
+      this.firedDB.collection("training-groups").doc(groupId).collection("members").doc(member.id).set(addedMember).catch(err => console.log(err))
+    })
+
+  }
+
+  removeMemberFromTrainingGroup(groupId, memeberIds){
+    memeberIds.forEach((memberId, index) => {
+      this.firedDB.collection("training-groups").doc(groupId).collection("members").doc(memberId).delete()
+    })
+  }
+
+  addTrainingGroupToCoach(payload, coachId, groupId) {
+    this.firedDB.collection("users").doc(coachId).collection("training-groups").doc(groupId).set(payload)
+      .then(() => {
+        console.log("The training group has been successfully added to coach!")
+      })
+      .catch(err => console.log(err))
+  }
+
+  getOwnerTrainingGroups(coachId, setGroups) {
+    return this.firedDB.collection("training-groups").where("owner", "==", coachId)
+      .onSnapshot((snapshot) => {
+        let groups = []
+        snapshot.forEach((group, index) => {
+          let groupItem = group.data()
+          groupItem.groupId = group.id
+          groups.push(groupItem)
+        })
+        setGroups(groups)
+      });
+  }
+
+  getAllPublicTrainingGroups(setPublicGroups) {
+    return this.firedDB.collection("training-groups").onSnapshot(snapshot => {
+      let groups = []
+        snapshot.forEach((group, index) => {
+          let groupItem = group.data()
+          groupItem.groupId = group.id
+          groups.push(groupItem)
+        })
+        setPublicGroups(groups)
+    })
+  }
+
+  getTrainingGroupContent(groupId, setGroupContent) {
+    return this.firedDB.collection("training-groups").doc(groupId)
+      .onSnapshot((snapshot) => {
+        let group = {...snapshot.data(), id: snapshot.id}
+        setGroupContent(group)
+      })
+  }
+
+  deleteTrainingGroup(groupId) {
+    this.firedDB.collection("training-groups").doc(groupId).delete().catch(err => console.log(err))
+  }
+
+  //function for fetching (listener) the workout plans from the training group (for owners only!)
+  getWorkoutPlansInTrainingGroup(group, setWorkoutPlans){
+    const doc = group.isPrivate ? "private" : "public"
+    return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans")
+    .onSnapshot(snapshot => {
+      let plans = []
+      snapshot.forEach((plan, index) => {
+        plans.push({...plan.data(), planId: plan.id})
+      })
+      setWorkoutPlans(plans)
+    })
+  }
+
+  getMemberWorkoutPlansFromTrainingGroup(group, setMemberPlans){
+    const doc = group.isPrivate ? "private" : "public"
+    return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").where("recipients", "array-contains", this.getCurrentUserId())
+    .onSnapshot(snapshot => {
+      let member_plans = []
+      snapshot.forEach((member_plan, index) => {
+        member_plans.push({...member_plan.data(), planId: member_plan.id})
+      })
+      setMemberPlans(member_plans)
+    })
+  }
+
+  //function for creating the workout plan in the training group
+  createWorkoutPlan(group, workoutPlan){
+    const doc = group.isPrivate ? "private" : "public"
+    return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").add(workoutPlan).then(docRef => {
+      return docRef.id
+    })
+  }
+
+  updateWorkoutPlan(group, planId, updates){
+    const doc = group.isPrivate ? "private" : "public"
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update(updates).catch(err => console.log(err))
+  }
+
+  createDayWorkout(group, planId, workout){
+    const doc = group.isPrivate ? "private" : "public"
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").add(workout)
+    .then((docRef)=>{
+      console.log("The workout has been successfuly added!")
+      let shortcut = {
+        title: workout.title,
+        dateStr: workout.dateStr
+      }
+      this.createDayWorkoutShortcut(group, planId, shortcut, docRef.id)
+  })
+    .catch(err => console.log(err))
+  }
+
+  createDayWorkoutShortcut(group, planId, shortcut, workoutId){
+    const doc = group.isPrivate ? "private" : "public"
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).set(shortcut).then(()=>console.log("The workout shortcut has been successfuly added!")).catch(err => console.log(err))
+  }
+
+  //function for deleting the workout plan from the training group
+  deleteWorkoutPlanFromTrainingGroup(group, planId){
+    const doc = group.isPrivate ? "private" : "public"
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).delete().then(()=>console.log("The workout plan has been successfuly deleted!")).catch(err => console.log(err))
+  }
+
+  getDayWorkoutShortcutsFromPlan(group, planId, setDayWorkoutShortcuts){
+    const doc = group.isPrivate ? "private" : "public"
+    return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts")
+    .onSnapshot(snapshot => {
+      let workouts_short = []
+      snapshot.forEach((snap, index) => {
+        let shortcut = {
+          title: snap.get("title"),
+          start: snap.get("dateStr"),
+          allDay: true,
+          workoutId: snap.id
+        }
+        workouts_short.push(shortcut)
+      })
+      setDayWorkoutShortcuts(workouts_short)
+    })
+  }
+
+  getWorkoutContent(group, planId, dateStr, setWorkoutContent){
+    const doc = group.isPrivate ? "private" : "public"
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").where("dateStr", "==", dateStr)
+    .get()
+    .then(snapshot => {
+      let workout_content = []
+      snapshot.forEach((snap, index) => {
+        workout_content.push({...snap.data(), workoutId: snap.id})
+      })
+      setWorkoutContent(workout_content)
+    })
+  }
+
+  updateWorkoutContent(group, planId, workoutId, updates){
+    const doc = group.isPrivate ? "private" : "public"
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").doc(workoutId).update(updates)
+    .then(()=>{
+
+      let short_update = {}
+      if(updates.title){
+        short_update.title = updates.title
+      }
+      this.updateWorkoutShortcut(group, planId, workoutId, short_update)
+
+    }).catch(err => console.log(err))
+  }
+
+  updateWorkoutShortcut(group, planId, workoutId, updates){
+    const doc = group.isPrivate ? "private" : "public"
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).update(updates)
+    .catch(err => console.log(err))
+  }
+
+  //<-----------------------FUNCTIONS FOR TRAINING GROUPS (END)----------------------->//
+
+  //<-----------------------FUNCTIONS FOR CHAT (START)----------------------->//
+
+  addNewChat(members) {
+    let chatData = {
+      members: members,
+      dateCreated: Date.now()
+    }
+
+    console.log("Chat data: ")
+    console.log(chatData)
+    this.firedDB.collection("chat-groups").add(chatData)
+      .then((docRef) => {
+        console.log("The chat group has been successfully added!")
+      })
+      .catch(err => console.log(err))
+  }
+
+  addNewChatToUser(chatId) {
+
+  }
+
+  getChatData(chatId, setChatData, setChatMessages) {
+    this.firedDB.collection("users").doc(this.getCurrentUserId()).collection("chats").doc(chatId)
+      .onSnapshot((snapshot) => {
+        setChatData(snapshot.data())
+      })
+
+    this.firedDB.collection("chat-groups").doc(chatId).collection("messages").orderBy("timestamp", "asc")
+      .onSnapshot((snapshot) => {
+        let messageList = []
+        snapshot.forEach((snap, index) => {
+          let message = { ...snap.data(), id: snap.id }
+          messageList.push(message)
+        })
+        setChatMessages(messageList)
+      })
+  }
+
+  getAllUserChats(userId, setChatGroups) {
+    return this.firedDB.collection("users").doc(userId).collection("chats")
+      .onSnapshot((snapshot) => {
+        let chatList = []
+        snapshot.forEach((snap, index) => {
+          let chat = snap.data()
+          chat.chatId = snap.id
+          chatList.push(chat)
+        })
+        setChatGroups(chatList)
+      })
+  }
+
+  isMessageLink(text) {
+    let url;
+
+    try {
+      url = new URL(text);
+    } catch (err) {
+      return false;
+    }
+
+    return url.protocol === "http:" || url.protocol === "https:";
+  }
+
+  addMessageToChat(sender, text, chatId) {
+    let isLink = this.isMessageLink(text)
+    console.log(isLink ? "true" : "false")
+    this.firedDB.collection("chat-groups").doc(chatId).collection("messages").add({
+      senderId: sender.uid,
+      senderName: sender.name,
+      senderPhotoURL: sender.photoURL,
+      text: text,
+      timestamp: Date.now()
+    })
+  }
+
+  getUserInfoById(userId) {
+    return this.firedDB.collection("users").doc(userId).get()
+      .then((snapshot) => {
+        let user = {
+          name: snapshot.data().name,
+          surname: snapshot.data().surname,
+          uid: snapshot.id,
+          photoURL: snapshot.data().photoURL,
+          role: snapshot.data().role
+        }
+        return user
+      }).then(user => {
+        return user
+      })
+  }
+  //<-----------------------FUNCTIONS FOR CHAT (END)----------------------->//
 }
 
 export default new Firebase()

@@ -8,13 +8,12 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from "@fullcalendar/list"
-import './App.css';
 import firebase from "../../firebase/firebase"
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 
 
-import DayDialog from "./dayDialog"
+import WorkoutPlanCalendarDialog from "./workoutPlanCalendarDialog"
 import { Button, Typography } from '@material-ui/core'
 
 let todayStr = new Date().toISOString().replace(/T.*$/, '')
@@ -34,90 +33,47 @@ const BorderLinearProgress = withStyles((theme) => ({
   },
 }))(LinearProgress);
 
-
-function TodoCalendar(props) {
+const init_content = [
+    {
+        title: "Workout1",
+        start: "2021-04-19",
+        allDay: true,
+        id: 1
+    },
+    {
+        title: "Workout2",
+        start: "2021-04-20",
+        allDay: true,
+        id: 2
+    },
+    {
+        title: "Workout3",
+        start: "2021-04-21",
+        allDay: true,
+        id: 3
+    }
+]
+function WorkoutPlanCalendar(props) {
   const userId = "jncnru2u934jd"
   const dayId = "vuhtru8gghdw"
 
-  const [open, setOpen] = useState({payload: false, mode: "CREATE"})
-  const [content, setContent] = useState([])
-  const [habits, setHabits] = useState([])
+  const [open, setOpen] = useState({payload: null, mode: "CREATE"})
+  const [content, setContent] = useState(init_content)
+
+  console.log(content)
 
   useEffect(()=>{
     console.log("Init the state")
-    //firebase.addDayContent(userId, dayId, {name: "Plan", date: todayStr, content: "Hello World!"})
-    firebase.getDayContent(props.user.uid, dayId, todayStr, setContent)
-    firebase.getHabits(props.user.uid, setHabits)
+    firebase.getDayWorkoutShortcutsFromPlan(props.group, props.planId, setContent)
   }, [props.user.uid])
 
-  console.log(habits)
 
-  useEffect(()=>{
-    let els = document.getElementsByClassName("fc-daygrid-day")
-    //console.log(els)
-
-    let els_array = Object.values(els)
-
-    content.forEach((item, index) => {
-      els_array.forEach((el, index) => {
-        if(el.dataset.date == item.start){
-          el.style.backgroundColor = "green"
-        }
-      })
-    })
-
-  }, [content])
-
-  console.log(content)
+  console.log(props.planId)
 
   function renderEventContent(eventInfo) {
     console.log(eventInfo.event.startStr)
     eventInfo.backgroundColor = "orange"
-    let habitNum = 0
-
-    //find the total number of habits in single day
-    habits.forEach((habit, index) => {
-      if(habit.type == "daily" && habit.startDate <= eventInfo.event.startStr){
-        habitNum++
-      }else if(habit.type == "weekly" && habit.startDate <= eventInfo.event.startStr){
-        let weekDay = new Date(eventInfo.event.startStr).getDay()
-        let habitDay = new Date(habit.startDate).getDay()
-
-        if (weekDay == habitDay){
-          habitNum++
-        }
-
-      }else if(habit.type == "monthly" && habit.startDate <= eventInfo.event.startStr){
-        let dayDate = new Date(eventInfo.event.startStr).getDate()
-        let habitDate = new Date(habit.startDate).getDate()
-        if (dayDate == habitDate){
-          habitNum++
-        }
-      }else if(habit.type == "custom"){
-        //add processing for custom habit repetition (according to weekdays)
-        let days = habit.days
-        let dayWeekDay = new Date(eventInfo.event.startStr).getDay()
-        if(days){
-            if (days.indexOf(dayWeekDay)+1){
-              habitNum++
-            }
-        }   
-        
-    }
-
-
-
-
-
-    })
-
-    return (
-      <>
-        <i>{eventInfo.event.title}</i>
-        <p>Total habits: {habitNum}</p>
-        <BorderLinearProgress variant="determinate" value={0}/>
-      </>
-    )
+    let habitNum = 0   
   }
 
   function handleCellMount(e){
@@ -180,65 +136,38 @@ function TodoCalendar(props) {
 
   //function for opening a day content to watch, edit, or create
   function handleDateClick(clickInfo){
-    console.log(clickInfo.dayEl)
+    console.log(clickInfo)
     //clickInfo.dayEl.style.backgroundColor = "blue"
     console.log("Day clicked")
     let todayStr = new Date().toISOString().replace(/T.*$/, '')
     //firebase.addDayContent(userId, dayId, {name: "", date: clickInfo.dateStr})
-    firebase.isDayContentEmpty(userId, "someId", clickInfo.dateStr).then(res => {
-      console.log(res)
-      if(res){
-        setOpen({payload: clickInfo, mode: "CREATE"})
-      }else{
-        
-        let name = ""
-        let id = ""
-        let completedHabits = 0
-        content.forEach((item, index) => {
-          if(item.start == clickInfo.dateStr){
-            name = item.title
-            id = item.id
-            completedHabits = item.completedHabits ? item.completedHabits : 0
-          }
-        })
-        setOpen({payload: clickInfo, mode: "WATCH", name: name, id: id, completedHabits: completedHabits})
-      }
-    })
-    //setOpen({payload: clickInfo, mode: "CREATE"})
-  } 
-
-  //function for adding the new habit
-  function handleAddHabit(){
-    let name = window.prompt("Name of habit: ")
-    let startDate = window.prompt("StartDate of habit: ")
-    let type = window.prompt("Enter the type (daily, weekly, monthly, custom)")
-    let habit = {
-      name: name,
-      startDate: startDate,
-      type: type
-    }
-    if(type == "custom"){
-      const weekDays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
-      let days = window.prompt("Enter the recurring days: ")
-      let days_array = days.split(", ")
-      let days_formatted_array = []
-
-      days_array.forEach((day) => {
-        console.log(day)
-        days_formatted_array.push(weekDays.indexOf(day.toLowerCase()))
-      })
-
-      console.log(days_formatted_array)
-      habit.days = days_formatted_array
-    }
-    console.log(habit)
-    if(habit.type && habit.name && habit.startDate){
-      firebase.addHabit(habit)
+    let event = content.find(e => e.start === clickInfo.dateStr)
+    console.log(event)
+    
+    if (event){
+        setOpen({payload: {dateStr: clickInfo.dateStr, title: event.title}, mode: props.readOnly ? "VIEW" : "UPDATE/EDIT"})
+    }else{
+        setOpen({payload: {dateStr: clickInfo.dateStr, title: ""}, mode: props.readOnly ? "VIEW" : "CREATE"})
     }
     
   }
 
-  console.log(open)
+  function handleEventClick(e){
+      console.log("Clicked the event!")
+      console.log(e.event)
+      const date = e.event.startStr
+      const title = e.event.title
+      if(props.readOnly){
+        setOpen({payload: {dateStr: date, title: title}, mode: "VIEW"})
+      }else{
+        setOpen({payload: {dateStr: date, title: title}, mode: "UPDATE/EDIT"})
+      }
+      
+  }
+
+  
+
+  //console.log(open)
 
   return (
     <div className="App">
@@ -262,9 +191,10 @@ function TodoCalendar(props) {
         events={content}
         eventAdd={(e)=>console.log("eventAdd")}
         eventContent={renderEventContent}
+        eventClick={(e)=>handleEventClick(e)}
         /*eventContent={renderEventContent} // custom render function 
         
-        eventClick={(e)=>handleEventClick(e)}
+        
         select={(e)=>handleDateSelect(e)}
         eventAdd={(e)=>console.log("eventAdd")}*/
       /*weekends={this.state.weekendsVisible}
@@ -278,8 +208,7 @@ function TodoCalendar(props) {
     */
       />
 
-      <DayDialog open={open} setOpen={setOpen} habits={habits} handleAddHabit={handleAddHabit} nextDay={nextDay} previousDay={previousDay}/>
-      <Button onClick={handleAddHabit}>Add Habit</Button>
+    {open.payload ? <WorkoutPlanCalendarDialog open={open} setOpen={setOpen} addContent={(item)=>setContent([...content, item])} group={props.group} planId={props.planId}/> : null}
       
     </div>
   );
@@ -303,4 +232,4 @@ const mapDispatchToProps = dispatch => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(TodoCalendar);
+export default connect(mapStateToProps, mapDispatchToProps)(WorkoutPlanCalendar);

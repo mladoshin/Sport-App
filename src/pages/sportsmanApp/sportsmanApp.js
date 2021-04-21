@@ -7,6 +7,8 @@ import firebase from '../../firebase/firebase';
 import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 
+
+//styles
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
     padding: "30px 0px 0px 0px"
@@ -43,60 +45,10 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-
+//sportsman app home page
 function SportsmanApp(props) {
-  const [isFirebaseInit, setIsFirebaseInit] = useState(false)
   const { userId } = useParams();
   const classes = useStyles();
-
-  /*useEffect(() => {
-    if (!isFirebaseInit) {
-      firebase.isInit().then(val => {
-        
-        //check if the user is autorized
-        if (firebase.getCurrentUserId()){
-          //get the user's custom claims
-          firebase.auth.currentUser.getIdTokenResult()
-          .then((idTokenResult) => {
-            console.log(idTokenResult.claims.coach)
-            if (idTokenResult.claims.role=="COACH" || firebase.getCurrentUserId() !== userId){
-              throw new Error("No auth!")
-            }
-            return idTokenResult.claims
-          }).then((claims) => {
-            let userInfo = {
-              displayName: firebase.auth.currentUser.displayName,
-              email: firebase.auth.currentUser.email,
-              phoneNumber: firebase.auth.currentUser.phoneNumber,
-              emailVerified: firebase.auth.currentUser.emailVerified,
-              photoURL: firebase.auth.currentUser.photoURL,
-              uid: firebase.auth.currentUser.uid,
-              claims: claims
-            }
-            console.log(userInfo)
-            props.setUser(userInfo)
-          })
-          .catch((error) => {
-            console.log(error);
-            props.history.replace("/404")
-          });
-
-          try{
-            firebase.getUserIP({email: firebase.auth.currentUser.email}).then(ip => console.log(ip))
-          }catch(err){
-            console.log(err)
-          }
-
-        }else{
-          //redirect for unautorized users
-          console.log("No auth!")
-          props.history.replace("/")
-        }
-        
-
-      })
-    }
-  }, [isFirebaseInit])*/
 
   function authCheck(urlId, userId) {
     console.log(urlId, userId)

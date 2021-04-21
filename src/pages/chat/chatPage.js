@@ -1,4 +1,4 @@
-//<-----------------------CALENDAR PAGE----------------------->//
+//<-----------------------CHAT PAGE (WORKOUT BUILDER)----------------------->//
 import React from "react"
 import { connect } from "react-redux"
 import { Container, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
@@ -10,12 +10,16 @@ import { makeStyles } from '@material-ui/core/styles';
 import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
 import AddIcon from '@material-ui/icons/Add';
 
-import TodoCalendar from "../dailyTodos/App"
+import ChatComponent from "./chatApp"
+
+
+import Paper from '@material-ui/core/Paper';
 
 //styles
 const useStyles = makeStyles((theme) => ({
     mainContainer: {
-        padding: "30px 0px 0px 0px"
+        padding: "0px 0px 0px 0px",
+        height: "100%"
     },
     gridItem: {
         padding: "1em"
@@ -49,24 +53,37 @@ const useStyles = makeStyles((theme) => ({
     searchInput: {
         height: "45px",
         boxSizing: "border-box"
-    }
+    },
+    root: {
+        flexGrow: 1,
+    },
+    paper: {
+        padding: theme.spacing(1),
+        textAlign: 'center',
+        color: theme.palette.text.secondary,
+    },
 
 }));
 
 
-function CalendarPage(props) {
+function ChatPage(props) {
     const classes = useStyles();
+
+    //function for adding new training groups
+    function handleAddGroup(){
+
+    }
+
     return (
         <>
             <Container className={classes.mainContainer} maxWidth="xl">
-                <h1>Calendar Page</h1>
-                <TodoCalendar/>
                 
-
+                <ChatComponent/>
             </Container>
+
 
         </>
     )
 }
 
-export default CalendarPage;
+export default ChatPage;

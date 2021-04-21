@@ -1,3 +1,4 @@
+//<-----------------------MOBILE NAVBAR COMPONENT----------------------->//
 import React, { useState } from 'react';
 import { connect } from 'react-redux'
 import clsx from 'clsx';
@@ -12,8 +13,10 @@ import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import Avatar from '@material-ui/core/Avatar';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
+//drawer width constant
 const drawerWidth = 240;
 
+//styles
 const useStyles = makeStyles((theme) => ({
     list: {
         width: 250,
@@ -62,20 +65,27 @@ const useStyles = makeStyles((theme) => ({
     avatar: {
         width: theme.spacing(4),
         height: theme.spacing(4)
+    },
+    content: {
+        width: "100%",
+        height: "100vh",
+        paddingTop: 56
     }
 }));
 
+//mobile navbar component
 function MobileNavbar(props) {
     const classes = useStyles();
-    //const [open, setOpen] = useState(false)
+    
     var open = props.open
     var setOpen = props.setOpen
-    //console.log("Drawer opened: "+open)
 
+    //function to toggle the drawer
     const toggleDrawer = (open) => {
         setOpen(open);
     };
 
+    //function for opening the user's profile
     function openProfile() {
         let role = props.user.claims.role
         
@@ -88,7 +98,9 @@ function MobileNavbar(props) {
         }
     }
 
+    //function for redirecting to the right page, after user have clicked on the menu item
     function handleMenuButtonClick(destination) {
+        //user's role 
         let role = props.user.claims.role
         
         if (role == "ADMIN") {

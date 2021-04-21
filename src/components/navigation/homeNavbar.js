@@ -1,3 +1,4 @@
+/*-------------------NAVBAR FOR LANDING PAGE-----------------------*/
 import React, {Suspense} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
@@ -26,9 +27,11 @@ const useStyles = makeStyles((theme) => ({
     } 
 }));
 
+//navbar component
 function HomeNavbar(props) {
     const classes = useStyles();
 
+    //function for opening the user profile (if the user is logged in)
     function openProfile() {
         let role = props.user.claims.role
         
@@ -41,6 +44,7 @@ function HomeNavbar(props) {
         }
     }
 
+    //function for redirecting to actual app (according to user's role)
     function handleConsoleBtnClick() {
         if (props.user.claims.role == "COACH") {
             props.goToPage("/coachApp/coachId=" + props.user.uid)
@@ -51,9 +55,10 @@ function HomeNavbar(props) {
         }
     }
 
+    //dynamic component of buttons (if user is logged in, show profile avatar and console button), else show login button
     function ActionButton() {
         if (props.user.uid) {
-            //render avatar (link to profile)
+            //if user is logged in, render console buttton and user's avatar
             return (
                 <>
                     <Button color="inherit" onClick={handleConsoleBtnClick}>Console</Button>
@@ -65,6 +70,7 @@ function HomeNavbar(props) {
             )
         }
         else {
+            //if user is not logged in, render login button
             return (
                 <Button color="inherit" onClick={() => props.goToPage("/sportsman-login")}>Login</Button>
             )

@@ -6,9 +6,12 @@ import { withRouter, useParams } from "react-router-dom";
 import firebase from '../../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
-import MiniDrawer from "../../components/navigation/desktopNavbar";
-import MobileNavbar from "../../components/navigation/mobileNavbar";
-import Navbar from "../../components/navigation/navbar";
+
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
+import FormLabel from '@material-ui/core/FormLabel';
 
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
@@ -54,56 +57,22 @@ function AdminApp(props) {
   const [openDrawer, setOpenDrawer] = useState(false)
   const [users, setUsers] = useState([])
 
+  const [value, setValue] = React.useState("ALL");
+
+
+
   useEffect(() => {
-    firebase.getAllUsers().then(res => setUsers(res.data))
-  }, [])
+    firebase.getAllUsers({ role: value }, setUsers)
+  }, [value])
 
-  /*useEffect(() => {
-    //console.log("useEffect started")
-    if (!isFirebaseInit) {
+  const handleChange = (event) => {
+    setValue(event.target.value);
+  };
 
-      firebase.isInit().then(val => {
-        setIsFirebaseInit(true)
-        console.log("useEffect started")
-        console.log(firebase.auth.currentUser)
-        //getting the user's IdToken
-        if (firebase.getCurrentUserId()) {
-          //if user is logged in
-          firebase.auth.currentUser.getIdTokenResult()
-            .then((idTokenResult) => {
-              //console.log(idTokenResult.claims.coach)
-              if (idTokenResult.claims.role !== "ADMIN") {
-                throw new Error("No auth!")
-              }
-              return idTokenResult.claims
-            }).then((claims) => {
-              let userInfo = {
-                displayName: firebase.auth.currentUser.displayName,
-                email: firebase.auth.currentUser.email,
-                phoneNumber: firebase.auth.currentUser.phoneNumber,
-                emailVerified: firebase.auth.currentUser.emailVerified,
-                photoURL: firebase.auth.currentUser.photoURL,
-                uid: firebase.auth.currentUser.uid,
-                claims: claims
-              }
-              console.log(userInfo)
-              props.setUser(userInfo)
-
-            })
-            .catch((error) => {
-              console.log(error);
-              props.history.replace("/404")
-            });
-
-        } else {
-          //if user is not authorized
-
-          props.history.replace("/")
-          alert("No Auth!")
-        }
-      })
-    }
-  }, [isFirebaseInit])*/
+  function handleGoToProfile(uid){
+    console.log("Going to the user's profile with id: "+uid)
+    props.history.push("/adminApp/viewUserProfile/userId="+uid)
+  }
 
 
   console.log(props.user)
@@ -115,8 +84,11 @@ function AdminApp(props) {
       <div style={{ border: "1px solid black", marginTop: 20 }}>
         <h1>Name: {user.name} {user.surname}</h1>
         <h2>Email: {user.email} </h2>
-        <h3>City: {user.city} </h3>
-        <h3>ID: {user.uid}</h3>
+        <h3>City: {user.geolocation && user.geolocation.city} </h3>
+        <h3>Country: {user.geolocation && user.geolocation.country} </h3>
+        <h3>User's IP: {user.geolocation && user.geolocation.ip} </h3>
+        <h3>ID: {user.id}</h3>
+        <button onClick={()=>handleGoToProfile(user.id)}>Go to profile</button>
       </div>
     )
   })
@@ -138,6 +110,15 @@ function AdminApp(props) {
           props.history.replace("/")
         }}>Logout</button>
       </Container>
+      <br/>
+      <FormControl component="fieldset">
+        <FormLabel component="legend">Sort:</FormLabel>
+        <RadioGroup aria-label="sort" name="sort" value={value} onChange={handleChange}>
+          <FormControlLabel value="COACH" control={<Radio />} label="Coaches" />
+          <FormControlLabel value="SPORTSMAN" control={<Radio />} label="Athletes" />
+          <FormControlLabel value="ALL" control={<Radio />} label="All" />
+        </RadioGroup>
+      </FormControl>
 
       {userList}
 

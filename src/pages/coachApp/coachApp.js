@@ -43,59 +43,10 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-
+//coach app home page
 function CoachApp(props) {
-  const [isFirebaseInit, setIsFirebaseInit] = useState(false)
   const { coachId } = useParams();
   const classes = useStyles();
-
-  /*useEffect(() => {
-    //console.log("useEffect started")
-    if (!isFirebaseInit) {
-
-      firebase.isInit().then(val => {
-        setIsFirebaseInit(true)
-        console.log("useEffect started")
-        console.log(firebase.auth.currentUser)
-        //getting the user's IdToken
-        if (firebase.getCurrentUserId()) {
-          //if user is logged in
-          firebase.auth.currentUser.getIdTokenResult()
-            .then((idTokenResult) => {
-              //console.log(idTokenResult.claims.coach)
-              if (idTokenResult.claims.role !== "COACH" || firebase.getCurrentUserId() !== coachId) {
-                throw new Error("No auth!")
-              }
-              return idTokenResult.claims
-            }).then((claims) => {
-              let userInfo = {
-                displayName: firebase.auth.currentUser.displayName,
-                email: firebase.auth.currentUser.email,
-                phoneNumber: firebase.auth.currentUser.phoneNumber,
-                emailVerified: firebase.auth.currentUser.emailVerified,
-                photoURL: firebase.auth.currentUser.photoURL,
-                uid: firebase.auth.currentUser.uid,
-                claims: claims
-              }
-              console.log(userInfo)
-              props.setUser(userInfo)
-            })
-            .catch((error) => {
-              console.log(error);
-              props.history.replace("/404")
-            });
-        } else {
-          //if user is not authorized
-          console.log("No auth!")
-          props.history.replace("/")
-        }
-
-
-      })
-    }
-  }, [isFirebaseInit])*/
-
-
 
   function authCheck(urlId, userId) {
     console.log(urlId, userId)

@@ -20,80 +20,57 @@ import SportsmanProfile from './pages/sportsmanApp/profile';
 import Navbar from './components/navigation/navbar';
 import WorkoutDiary from './pages/adminApp/workoutDiary';
 import WorkoutsPage from './pages/coachApp/workoutsPage';
+import NotesPage from './pages/coachApp/notesPage';
 import CalendarPage from './pages/coachApp/calendarPage';
+import TrainingGroupsPage from './pages/coachApp/trainingGroupsPage';
+import ChatPage from "./pages/chat/chatPage"
+
+//page for individual group
+import TrainingGroupPage from './pages/trainingGroups/TrainingGroupPage';
+import WorkoutPlanPage from './pages/coachApp/workoutPlanPage';
+
+//APP THEMES (DARK AND LIGHT)
+const DarkTheme = createMuiTheme({
+  palette: {
+    type: "dark"
+  }
+})
+
+const LightTheme = createMuiTheme({
+  palette: {
+    type: "light"
+  }
+})
 
 function App(props) {
-  const [isFirebaseInit, setIsFirebaseInit] = useState(false)
 
-  /*useEffect(() => {
-    if (!isFirebaseInit) {
-
-      firebase.isInit().then(val => {
-        //console.log(val)
-        //check if the user is autorized
-
-        if (firebase.getCurrentUserId()) {
-          //get the user's custom claims
-          firebase.auth.currentUser.getIdTokenResult()
-            .then((idTokenResult) => {
-              return idTokenResult.claims
-            }).then((claims) => {
-              let userInfo = {
-                displayName: firebase.auth.currentUser.displayName,
-                email: firebase.auth.currentUser.email,
-                phoneNumber: firebase.auth.currentUser.phoneNumber,
-                emailVerified: firebase.auth.currentUser.emailVerified,
-                photoURL: firebase.auth.currentUser.photoURL,
-                uid: firebase.auth.currentUser.uid,
-                claims: claims
-              }
-              //console.log(userInfo)
-              
-              return userInfo
-            }).then(userInfo => {
-              props.setUser(userInfo)
-              
-            })
-            .catch((error) => {
-              console.log(error);
-              //props.history.replace("/404")
-            });
-        }
-
-      })
-    }
-  }, [isFirebaseInit])*/
-
-  
-
+  //useEffect for loading user's preferences
   useEffect(() => {
-    console.log(props.user)
+    //console.log(props.user)
+
+    //load user's preferences from firebase firestore
+    firebase.getCurrentUserPreferences(props.setUserPreferences)
   }, [props.user])
 
+  console.log(props.userPreferences)
+
+  //useEffect for setting the app theme
+  useEffect(()=> {
+    props.setTheme(props.userPreferences.appTheme)
+  }, [props.userPreferences.appTheme])
+
+  //Initial useEffect (called only once), attach the user listener and set the device type (click or touch)
   useEffect(() => {
     //set the isTouchabe (from isTouchable function) to redux
     props.setIsTouchable(isTouchable())
-    props.setTheme("light")
-    firebase.getCurrentUser(props.setUser)
 
-    //console.log(firebase.getCurrentUserId())
+    //attach a listener for user (get user's public information)
+    firebase.getCurrentUser(props.setUser)
   }, [])
 
   //console.log(props.theme)
 
-  const DarkTheme = createMuiTheme({
-    palette: {
-      type: "dark"
-    }
-  })
-
-  const LightTheme = createMuiTheme({
-    palette: {
-      type: "light"
-    }
-  })
-
-  console.log(props.theme)
+  //console.log(props.theme)
 
   return (
     <ThemeProvider theme={props.theme.colorMode === "dark" ? DarkTheme : LightTheme}>
@@ -108,12 +85,20 @@ function App(props) {
           {/* SPORTSMAN APP ROUTES*/}
           <Route exact path="/sportsmanApp/userId=:userId" render={() => <Navbar><SportsmanApp /></Navbar>} />
           <Route exact path="/sportsmanApp/userId=:userId/profile" render={() => <Navbar><SportsmanProfile /></Navbar>} />
+          <Route exact path="/sportsmanApp/userId=:userId/training-groups" render={() => <Navbar><TrainingGroupsPage type="SPORTSMAN"/></Navbar>} />
+          <Route exact path="/sportsmanApp/userId=:userId/training-groups/groupId=:groupId" render={() => <Navbar><TrainingGroupPage type="SPORTSMAN"/></Navbar>} />
+          <Route exact path="/sportsmanApp/userId=:userId/chats" render={() => <Navbar><ChatPage/></Navbar>} />
 
           {/* COACH APP ROUTES*/}
           <Route exact path="/coachApp/coachId=:coachId" render={() => <Navbar><CoachApp /></Navbar>} />
           <Route exact path="/coachApp/coachId=:coachId/profile" render={() => <Navbar><CoachProfile /></Navbar>} />
           <Route exact path="/coachApp/coachId=:coachId/workouts" render={() => <Navbar><WorkoutsPage/></Navbar>} />
+          <Route exact path="/coachApp/coachId=:coachId/notes" render={() => <Navbar><NotesPage/></Navbar>} />
           <Route exact path="/coachApp/coachId=:coachId/calendar" render={() => <Navbar><CalendarPage/></Navbar>} />
+          <Route exact path="/coachApp/coachId=:coachId/training-groups" render={() => <Navbar><TrainingGroupsPage type="COACH"/></Navbar>} />
+          <Route exact path="/coachApp/coachId=:coachId/training-groups/groupId=:groupId" render={() => <Navbar><TrainingGroupPage type="COACH"/></Navbar>} />
+          <Route exact path="/coachApp/coachId=:coachId/chats" render={() => <Navbar><ChatPage/></Navbar>} />
+          <Route exact path="/coachApp/coachId=:coachId/workout-plans/planId=:planId" render={() => <Navbar><WorkoutPlanPage/></Navbar>} />
 
           {/* ADMIN APP ROUTES*/}
           <Route exact path="/adminApp" render={() => <Navbar><AdminApp /></Navbar>} />
@@ -134,7 +119,8 @@ const mapStateToProps = state => {
   return {
     isTouchable: state.isTouchable,
     theme: state.theme,
-    user: state.user
+    user: state.user,
+    userPreferences: state.userPreferences
   }
 }
 
@@ -142,7 +128,8 @@ const mapDispatchToProps = dispatch => {
   return {
     setIsTouchable: (val) => dispatch({ type: "ISTOUCHABLE/SET", payload: val }),
     setTheme: (theme) => dispatch({ type: "THEME/CHANGE", payload: theme }),
-    setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj })
+    setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj }),
+    setUserPreferences: (obj) => dispatch({type: "USER/LOAD-PREFERENCES", payload: obj})
   }
 }
 

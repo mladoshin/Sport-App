@@ -7,8 +7,8 @@ import NavBar from "../../components/navigation/navbar"
 import HomeNavbar from "../../components/navigation/homeNavbar"
 import firebase from '../../firebase/firebase';
 
-function HomePage(props){
-    
+//Home page for landing page
+function HomePage(props){  
     return(
         <React.Fragment>
             <HomeNavbar goToPage={props.history.push}/>

@@ -92,6 +92,11 @@ const useStyles = makeStyles((theme) => ({
     avatar: {
         width: theme.spacing(4),
         height: theme.spacing(4)
+    },
+    content: {
+        width: "100%",
+        height: "100vh",
+        paddingTop: 64
     }
 }));
 

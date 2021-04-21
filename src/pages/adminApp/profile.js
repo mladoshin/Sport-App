@@ -1,4 +1,4 @@
-//page for the admin's profile
+/*-----------------------------PAGE FOR ADMIN'S PROFILE-----------------------------*/
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
@@ -7,8 +7,9 @@ import { withRouter, useParams } from "react-router-dom";
 import firebase from '../../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
-import MiniDrawer from "../../components/navigation/desktopNavbar";
 
+
+//styles
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
     padding: "30px 0px 0px 0px"
@@ -45,64 +46,10 @@ const useStyles = makeStyles((theme) => ({
 
 
 
-
+//Admin profile page component
 function AdminProfile(props) {
-  const [isFirebaseInit, setIsFirebaseInit] = useState(false)
   const [openDrawer, setOpenDrawer] = useState(false)
   const classes = useStyles();
-
-  useEffect(() => {
-    //console.log("useEffect started")
-    if (!isFirebaseInit) {
-
-      firebase.isInit().then(val => {
-        setIsFirebaseInit(true)
-        console.log("useEffect started")
-        console.log(firebase.auth.currentUser)
-        //getting the user's IdToken
-        if (firebase.getCurrentUserId()) {
-          //if user is logged in
-          firebase.auth.currentUser.getIdTokenResult()
-            .then((idTokenResult) => {
-              //console.log(idTokenResult.claims.coach)
-              if (idTokenResult.claims.role !== "ADMIN") {
-                throw new Error("No auth!")
-              }
-              return idTokenResult.claims
-            }).then((claims) => {
-              let userInfo = {
-                displayName: firebase.auth.currentUser.displayName,
-                email: firebase.auth.currentUser.email,
-                phoneNumber: firebase.auth.currentUser.phoneNumber,
-                emailVerified: firebase.auth.currentUser.emailVerified,
-                photoURL: firebase.auth.currentUser.photoURL,
-                uid: firebase.auth.currentUser.uid,
-                claims: claims
-              }
-              console.log(userInfo)
-              console.log(props.user)
-              if(!props.user){
-                props.setUser(userInfo)
-              }
-              
-              
-              
-            })
-            .catch((error) => {
-              console.log(error);
-              props.history.replace("/404")
-            });
-        } else {
-          //if user is not authorized
-          
-          props.history.replace("/")
-          alert("No Auth!")
-        }
-
-
-      })
-    }
-  }, [isFirebaseInit])
 
   return (
     <React.Fragment>

@@ -1,14 +1,17 @@
-//page for the user's profile
+//<-----------------------page for the user's profile----------------------->//
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
-import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
+import { Container, Avatar, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
 import firebase from '../../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
-import MiniDrawer from "../../components/navigation/desktopNavbar";
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import UploadDialog from "../coachApp/uploadDialog"
 
+//styles
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
     padding: "30px 0px 0px 0px"
@@ -47,74 +50,59 @@ const useStyles = makeStyles((theme) => ({
 
 
 function SportsmanProfile(props) {
-  const [isFirebaseInit, setIsFirebaseInit] = useState(false)
   const classes = useStyles();
 
-  useEffect(() => {
-    //console.log("useEffect started")
-    if (!isFirebaseInit) {
+  //state for the dialog (avatar upload)
+  const [fileDialogOpen, setFileDialogOpen] = useState(false)
 
-      firebase.isInit().then(val => {
-        setIsFirebaseInit(true)
-        console.log("useEffect started")
-        console.log(firebase.auth.currentUser)
-        //getting the user's IdToken
-        if (firebase.getCurrentUserId()) {
-          //if user is logged in
-          firebase.auth.currentUser.getIdTokenResult()
-            .then((idTokenResult) => {
-              //console.log(idTokenResult.claims.coach)
-              if (idTokenResult.claims.role !== "ADMIN") {
-                //throw new Error("No auth!")
-              }
-              return idTokenResult.claims
-            }).then((claims) => {
-              let userInfo = {
-                displayName: firebase.auth.currentUser.displayName,
-                email: firebase.auth.currentUser.email,
-                phoneNumber: firebase.auth.currentUser.phoneNumber,
-                emailVerified: firebase.auth.currentUser.emailVerified,
-                photoURL: firebase.auth.currentUser.photoURL,
-                uid: firebase.auth.currentUser.uid,
-                claims: claims
-              }
-              console.log(userInfo)
-              console.log(props.user)
-              if(!props.user){
-                props.setUser(userInfo)
-              }
-              
-              
-              
-            })
-            .catch((error) => {
-              console.log(error);
-              props.history.replace("/404")
-            });
-        } else {
-          //if user is not authorized
-          
-          props.history.replace("/")
-          alert("No Auth!")
-        }
+  //function for handling the opening of a avatar upload dialog
+  function handleAvatarUpload() {
+    //set the dialog open state to true (open the dialog)
+    setFileDialogOpen(true)
+  }
 
+  //function which changes the app theme in setting sub section in profile
+  function handleThemeChange(e){
+    console.log()
+    if(e.target.checked){
+      //set dark theme
+      firebase.updateUserPreferences({appTheme: "dark"})
+      //props.setTheme("dark")
+    }else{
+      //set light theme
+      //props.setTheme("light")
+      firebase.updateUserPreferences({appTheme: "light"})
 
-      })
     }
-  }, [isFirebaseInit])
+  }
 
   return (
     <React.Fragment>
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
         <h1>Sportsman Profile</h1>
+        <Avatar alt="avatar" src={props.user.photoURL} style={{ width: 200, height: 200 }} onClick={handleAvatarUpload} />
         <Suspense fallback={null}>
           <h3>{props.user.displayName}</h3>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
+
+        <h2>Settings</h2>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={props.theme.colorMode == "dark"}
+              onChange={handleThemeChange}
+              name="checkedB"
+              color="primary"
+            />
+          }
+          label={props.theme.colorMode == "dark" ? "Light theme" : "Dark theme"}
+        />
+
       </Container>
 
 
-
+      <UploadDialog open={fileDialogOpen} handleClose={() => setFileDialogOpen(false)} />
     </React.Fragment>
 
   );
@@ -122,7 +110,8 @@ function SportsmanProfile(props) {
 
 const mapStateToProps = state => {
   return {
-    user: state.user
+    user: state.user,
+    theme: state.theme
   }
 }
 

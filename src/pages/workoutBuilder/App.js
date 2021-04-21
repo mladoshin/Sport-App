@@ -1,3 +1,4 @@
+//<-----------------------WORKOUT BUILDER COMPONENT----------------------->//
 import React, { useState, useEffect, useRef } from "react"
 import { connect } from "react-redux"
 import { Button, Dialog, IconButton, Accordion, AccordionSummary, Fab, AccordionDetails, Typography, Card, CardContent, AccordionActions } from "@material-ui/core";
@@ -11,16 +12,8 @@ const userId = "fu387rvb938y4fv"
 const date = new Date(Date.now()).toLocaleDateString()
 
 function Circuit(props) {
-  //console.log(props.circuit)
-  const [exercises, setExercises] = useState([])
+
   let { circuitRef } = useRef()
-  //console.log(exercises)
-
-  useState(() => {
-    //console.log(props.circuit.id)
-    //firebase.getExercises(userId, props.circuit.id, setExercises)
-  }, [props.circuit.id])
-
 
   let exerciseList = props.circuit.exercises.map((item, index) => {
     return (
@@ -29,15 +22,8 @@ function Circuit(props) {
   })
 
   function handleDeleteCircuit() {
-
-    //deleting all exercises from the circuit
-    //exercises.forEach((exercise, index) => {
-    //  firebase.deleteExercise(userId, exercise.id)
-    //})
-
     //deleting the circuit
     firebase.deleteCircuit(userId, props.circuit.exercises, props.circuit.id)
-
   }
 
   function handleAddExercise() {
@@ -91,6 +77,7 @@ function Circuit(props) {
   )
 }
 
+//exercise component (card)
 function Exercise(props) {
   return (
     <Card style={{ width: "100%", backgroundColor: "#ff7961", marginBottom: 10, padding: 0 }}>
@@ -110,6 +97,7 @@ function Exercise(props) {
   )
 }
 
+//single workout item component (accordion)
 function WorkoutItem(props) {
   const [circuits, setCircuits] = useState([])
 
@@ -192,17 +180,28 @@ function WorkoutItem(props) {
   )
 }
 
+//main workout builder component
 function WorkoutComponent(props) {
+  //state for all workouts
   const [workouts, setWorkouts] = useState([])
+  //dialog state
   const [open, setOpen] = useState({ mode: null, payload: false })
 
   console.log(workouts)
 
+  //fetch all workouts in this useEffect
   useEffect(() => {
     console.log(props.user.uid)
-    //fetch all the workouts from the database
-    firebase.getWorkouts(props.user.uid, date, setWorkouts)
+    if(props.type === "DAYPLAN"){
+      //fetch all workouts for a specific date in workout plan calendar
+      
+    }else{
+      //fetch all the workouts from the database
+      firebase.getWorkouts(props.user.uid, date, setWorkouts)
+    }
+    
   }, [props.user.uid])
+
 
   function updateWorkouts() {
     firebase.getWorkouts(userId, date, setWorkouts)
@@ -217,6 +216,7 @@ function WorkoutComponent(props) {
     )
   })
 
+  //function for adding a a new workout
   function handleAddWorkout() {
     let name = window.prompt("Name: ")
 
@@ -228,13 +228,19 @@ function WorkoutComponent(props) {
 
   }
 
+  function handleAddWorkoutToDay(){
+    
+  }
+
   return (
     <>
-      <Fab color="primary" aria-label="add" style={{ position: "absolute", right: 20, bottom: 20 }} onClick={()=>handleAddWorkout()}>
+      {props.type !== "DAYPLAN" && 
+      <Fab color="primary" aria-label="add" style={{ position: "absolute", right: 20, bottom: 20}} onClick={()=>handleAddWorkout()}>
         <AddIcon />
       </Fab>
+      }
 
-
+      {props.type === "DAYPLAN" && <center><Button onClick={()=>handleAddWorkoutToDay()} variant="contained" color="secondary">Add workout</Button></center>}
       <div style={{ display: "flex", flexDirection: "column", width: "80%", marginLeft: "auto", marginRight: "auto",  marginTop: 30}}>
         {workoutList}
       </div>

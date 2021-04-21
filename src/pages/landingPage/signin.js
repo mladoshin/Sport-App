@@ -1,3 +1,4 @@
+//<-----------------------SIGNIN PAGE----------------------->//
 import React, { useState } from "react"
 import firebase from '../../firebase/firebase'
 import { Typography, Avatar, Button, CssBaseline, TextField, FormControlLabel, Checkbox, Link, Grid, Container } from '@material-ui/core'
@@ -8,7 +9,7 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import { makeStyles } from '@material-ui/core/styles';
 
 
-
+//styles
 const useStyles = makeStyles((theme) => ({
   paper: {
     marginTop: theme.spacing(8),

@@ -13,6 +13,7 @@ import Switch from '@material-ui/core/Switch';
 
 import UploadDialog from "./uploadDialog"
 
+//styles
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
     padding: "30px 0px 0px 0px"
@@ -51,11 +52,13 @@ const useStyles = makeStyles((theme) => ({
 
 
 function CoachProfile(props) {
+  //state for the dialog (avatar upload)
   const [fileDialogOpen, setFileDialogOpen] = useState(false)
+  //state for appTheme
   const [darkTheme, setDarkTheme] = useState(props.theme.colorMode==="dark" ? true : false)
 
   const classes = useStyles();
-  console.log(props.user.photoURL)
+  //console.log(props.user.photoURL)
 
   //function for handling the opening of a avatar upload dialog
   function handleAvatarUpload() {
@@ -63,6 +66,7 @@ function CoachProfile(props) {
     setFileDialogOpen(true)
   }
 
+  //function for changing the app theme
   function handleThemeChange(e){
     setDarkTheme(e.target.checked)
     if(e.target.checked){

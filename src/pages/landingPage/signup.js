@@ -253,16 +253,20 @@ function putUserDataToDB(props) {
         }
         
         //writing into realtime database
-        firebase.db.ref(uid + "/user-info").set({
+        firebase.firedDB.collection("users").doc(uid).set({
             name: props.name,
             surname: props.surname,
-            coach: props.isCoach,
+            role: props.isCoach ? "COACH" : "SPORTSMAN",
             email: props.email,
             mobile_num: props.mobile_num ? props.mobile_num : null,
             discipline: props.discipline ? props.discipline : null,
-            geolocation: geolocation
+            photoURL: null
     
         });
+        firebase.firedDB.collection("users").doc(uid).collection("private").doc("preferences").set({
+            appTheme: "light"
+        })
+        firebase.firedDB.collection("users").doc(uid).collection("private").doc("geolocation").set(geolocation)
     })
 
 }

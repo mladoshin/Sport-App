@@ -1,4 +1,4 @@
-//<-----------------------WORKOUTS PAGE (WORKOUT BUILDER)----------------------->//
+//<-----------------------TRAINING GROUPS PAGE (WORKOUT BUILDER)----------------------->//
 import React from "react"
 import { connect } from "react-redux"
 import { Container, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
@@ -9,13 +9,14 @@ import firebase from '../../firebase/firebase';
 import { makeStyles } from '@material-ui/core/styles';
 import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
 import AddIcon from '@material-ui/icons/Add';
+import TrainingGroupsComponent from "../trainingGroups/trainingGroups"
 
-import WorkoutComponent from "../workoutBuilder/App"
+import Paper from '@material-ui/core/Paper';
 
 //styles
 const useStyles = makeStyles((theme) => ({
     mainContainer: {
-        padding: "30px 0px 0px 0px"
+        height: "100%"
     },
     gridItem: {
         padding: "1em"
@@ -49,20 +50,34 @@ const useStyles = makeStyles((theme) => ({
     searchInput: {
         height: "45px",
         boxSizing: "border-box"
-    }
+    },
+    root: {
+        flexGrow: 1,
+    },
+    paper: {
+        padding: theme.spacing(1),
+        textAlign: 'center',
+        color: theme.palette.text.secondary,
+    },
 
 }));
 
 
-function WorkoutsPage(props) {
+function TrainingGroupsPage(props) {
     const classes = useStyles();
+
+    //function for adding new training groups
+    function handleAddGroup(){
+
+    }
+
     return (
         <>
-            <Container className={classes.mainContainer}>
-                <h1>Workouts Page</h1>
+            <Container className={classes.mainContainer} maxWidth="xl">
+                <h1>Training groups Page</h1>
 
                 <div style={{ height: 45 }}>
-                    <TextField id="outlined-basic" label="Search for workouts" variant="outlined" style={{ height: "100%" }}
+                    <TextField id="outlined-basic" label="Search for training groups" variant="outlined" style={{ height: "100%" }}
                         inputProps={{
                             style: {
                                 height: 45,
@@ -86,13 +101,14 @@ function WorkoutsPage(props) {
                 </Button>
                 </div>
 
-                <WorkoutComponent/>
+                <TrainingGroupsComponent type={props.type}/>
+                
 
             </Container>
 
-            
+
         </>
     )
 }
 
-export default WorkoutsPage;
+export default TrainingGroupsPage;
