@@ -11,6 +11,7 @@ function Chat(props) {
     const [message, setMessage] = useState("")
     const [chatName, setChatName] = useState("")
     const chat = props.chat
+    const chatTitle = chat ? chat.title : null
 
     useEffect(()=>{
         //useEffect for smooth scrolling to bottom
@@ -47,8 +48,7 @@ function Chat(props) {
 
     function scrollToBottom(){
         let container = document.getElementById("chat-container");
-        console.log(container.clientHeight)
-        console.log("scrolling")
+        
         //container.scrollTop = container.scrollHeight
         container.scroll({
             top: container.scrollHeight,
@@ -106,7 +106,7 @@ function Chat(props) {
 
                 <Paper square>
                     <Button size="small" onClick={() => props.toggleHidden()}>Hide list</Button>
-                    <h1 style={{ margin: 0, display: "inline" }}>{chatName}</h1>
+                    <h1 style={{ margin: 0, display: "inline" }}>{props.mode === "GROUP" ? chatTitle : chatName}</h1>
                 </Paper>
             </div>
 

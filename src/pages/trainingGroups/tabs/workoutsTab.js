@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import WorkoutComponent from "../../workoutBuilder/App"
 import TodoCalendar from "../../dailyTodos/App"
-import { Button, Grid, List, ListItem, Paper } from "@material-ui/core"
+import { Button, Grid, List, ListItem, ListItemSecondaryAction, Paper } from "@material-ui/core"
 import { Container, CssBaseline, Tooltip, FormControlLabel, FormControl, MenuItem, ListItemText, Checkbox, InputLabel, Input, Select, Dialog, AppBar, Toolbar, IconButton, Switch, Avatar, TextField } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close';
 import { makeStyles } from '@material-ui/core/styles';
 import Slide from '@material-ui/core/Slide';
 import { withRouter, useParams } from "react-router-dom";
 import firebase from "../../../firebase/firebase"
+
+import DeleteIcon from '@material-ui/icons/Delete';
 
 import WorkoutPlanCalendar from "../workoutPlanCalendar"
 
@@ -32,19 +34,27 @@ function TrainingPlanDialog(props) {
     const [title, setTitle] = useState("")
     const [isForAllMembers, setIsForAllMembers] = useState(true)
     const [recipients, setRecipients] = useState()
-    const [id, setId] = useState("")
+    const [info, setInfo] = useState(null)
     const classes = useStyles()
 
-    console.log(props.open)
+    console.log(info)
 
     useEffect(() => {
         console.log(props.open.payload)
         if (props.open.payload) {
             setTitle(props.open.payload.name)
             setRecipients(props.open.payload.recipients)
-
+            //use listener for recipients
+            firebase.getWorkoutPlanById(props.group, props.open.payload.planId, setInfo)
         }
     }, [props.open.payload])
+
+    useEffect(()=>{
+        if(info){
+            setRecipients(info.recipients)
+        }
+        
+    }, [info])
 
     function handleClose() {
         props.setOpen({ ...props.open, payload: null })
@@ -107,22 +117,16 @@ function TrainingPlanDialog(props) {
         }
     }
 
-    function PlanTitle(props) {
-        const title = props.title
-        const setTitle = props.setTitle
-        if (props.mode === "READONLY") {
-            return (
-                <h1>{title}</h1>
-            )
-        } else {
-            return (
-                <TextField label="Enter a name" value={title} onChange={(e) => setTitle(e.target.value)} style={{ flex: 1 }}/>
-            )
+    function PlanMemberForm() {
+        const [id, setId] = useState("")
+
+        function handleAddRecipient(id){
+            //setRecipients([...recipients, id])
+            //console.log(props.open.payload.planId)
+            firebase.addRecipientFromTrainingPlan(props.group, props.open.payload.planId, id)
+            setId("")
         }
 
-    }
-
-    function PlanMemberForm() {
         if (props.open.mode === "READONLY") {
             return null
         } else {
@@ -134,14 +138,21 @@ function TrainingPlanDialog(props) {
                     />
                     {!isForAllMembers &&
                         <div>
-                            <TextField variant="outlined" label="Member id:" value={id} onChange={(e) => setId(e.target.value)} />
-                            <Button onClick={() => setRecipients([...recipients, id])}>Add</Button>
-                            <List>
+                            <TextField variant="outlined" label="Member email:" value={id} onChange={(e) => setId(e.target.value)} />
+                            <Button onClick={() => handleAddRecipient(id)}>Add</Button>
+                            <List style={{width: "40%"}}>
                                 {recipients.map((recipient, i) => {
                                     return (
-                                        <ListItem key={i}>
-                                            <p>{i + 1}) </p>
-                                            {recipient}
+                                        <ListItem key={i} style={{backgroundColor: "grey", marginBottom: 10}}>
+                                            <ListItemText>
+                                                {recipient}
+                                            </ListItemText>
+                                            <ListItemSecondaryAction>
+                                                <IconButton color="secondary" onClick={()=>firebase.deleteRecipientFromTrainingPlan(props.group, props.open.payload.planId, recipient)}>
+                                                    <DeleteIcon/>
+                                                </IconButton>
+                                            </ListItemSecondaryAction>
+                                            
                                         </ListItem>
                                     )
                                 })}
@@ -228,7 +239,7 @@ function OwnerContent(props) {
                 <Button color="primary" variant="contained" onClick={() => handleOpenDialog("CREATE", { title: "" })}>Add Training Plan</Button>
             </div>
 
-            <TrainingPlanDialog open={open} setOpen={setOpen} group={props.group} />
+            <TrainingPlanDialog open={open} setOpen={setOpen} group={props.group} planId={props.planId}/>
         </>
     )
 }

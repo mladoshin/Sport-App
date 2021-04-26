@@ -89,7 +89,7 @@ function TrainingGroupPage(props) {
     //console.log(memberPhotoURLS)
 
     console.log(loaded ? "loaded" : null)
-    console.log(isViewable ? "isViewable is TRUE" : "isViewable is FALSE")
+    console.log(groupContent.id)
 
     //fetch the training group general information
     useEffect(() => {
@@ -129,6 +129,10 @@ function TrainingGroupPage(props) {
         }
     }
 
+    function handleUnsubscribe(){
+        firebase.removeMemberFromTrainingGroup(groupContent.id, [props.user.uid])
+    }
+
     function ActionButton(){
         const isInGroup = isUserInGroup(props.user.uid, groupContent.members)
         const isOwner = groupContent.owner === props.user.uid
@@ -142,7 +146,7 @@ function TrainingGroupPage(props) {
             if(isInGroup){
                 //if the sportsman is in training group
                 return(
-                    <Button size="small" color="secondary">Unsubscribe</Button>
+                    <Button size="small" color="secondary" onClick={handleUnsubscribe}>Unsubscribe</Button>
                 )
                 
             }else if(!isInGroup && !groupContent.isPrivate){
@@ -186,13 +190,13 @@ function TrainingGroupPage(props) {
     const TabPanel = () => {
         if (currentPage === 0){
             //show posts page
-            return <NewsTab/>
+            return <NewsTab group={groupContent}/>
         }else if(currentPage === 1){
             //show workout page
             return <WorkoutsTab group={groupContent}/>
         }else if(currentPage === 2){
             //show chat
-            return <ChatTab/>
+            return <ChatTab group={groupContent}/>
         }
     }
 

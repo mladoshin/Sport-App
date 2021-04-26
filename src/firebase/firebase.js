@@ -44,7 +44,7 @@ class Firebase {
     this.getUserIP = this.functions.httpsCallable("getUserIP")
 
     let getUserByEmail = this.functions.httpsCallable("getUserByEmail")
-    this.getUserByEmail = (email) => getUserByEmail({email})
+    this.getUserByEmail = (email) => getUserByEmail({ email })
 
     //this.getAllUsers = this.functions.httpsCallable("getAllUsers")
     //firebaseall.analytics()
@@ -492,7 +492,7 @@ class Firebase {
 
   //function for uploading user's avatar to firebase storage
   uploadAvatarToStorage(avatar, updateAvatarState) {
-    const uploadTask = this.storage.ref(this.getCurrentUserId() + "/avatar/avatar.jpg").put(avatar)
+    const uploadTask = this.storage.ref("/users/"+this.getCurrentUserId() + "/avatar/avatar.jpg").put(avatar)
     return uploadTask.on("state_changed",
       snapshot => {
 
@@ -502,10 +502,7 @@ class Firebase {
         console.log(error.message)
       },
       () => {
-        return this.storage
-          .ref(this.getCurrentUserId() + "/avatar/")
-          .child("avatar.jpg")
-          .getDownloadURL()
+        return uploadTask.snapshot.ref.getDownloadURL()
           .then(avatarUrl => {
             this.auth.currentUser.updateProfile({
               photoURL: avatarUrl
@@ -864,15 +861,15 @@ class Firebase {
   }
 
   //only for owners
-  updateTrainingGroupInfo(updates, groupId){
+  updateTrainingGroupInfo(updates, groupId) {
     this.firedDB.collection("training-groups").doc(groupId).update(updates).catch(err => console.log(err))
   }
 
   getUserProfilePhotoURL(members, setMemberPhotoURLS) {
-    let memberIds = members.map(member => {return member.uid})
+    let memberIds = members.map(member => { return member.uid })
     console.log("memberIds")
     console.log(members)
-    this.firedDB.collection("users").where(firebase.firestore.FieldPath.documentId(),"in", memberIds).get().then(snapshot => {
+    this.firedDB.collection("users").where(firebase.firestore.FieldPath.documentId(), "in", memberIds).get().then(snapshot => {
       let members = []
       snapshot.forEach((member) => {
         members.push(member.get("photoURL"))
@@ -894,7 +891,7 @@ class Firebase {
       });
   }
 
-  getUserTrainingGroups(uid, setGroups){
+  getUserTrainingGroups(uid, setGroups) {
     this.firedDB.collection("training-groups").where("members", "array-contains", uid)
       .onSnapshot((snapshot) => {
         let groups = []
@@ -908,23 +905,23 @@ class Firebase {
   }
 
   //function for applying to private training groups
-  applyToTrainingGroup(groupId, userId, user){
+  applyToTrainingGroup(groupId, userId, user) {
     this.firedDB.collection("training-groups").doc(groupId).collection("applicants").doc(userId).set(user).catch(err => console.log(err))
   }
 
 
-  getAllApplicantsFromTrainingGroup(groupId, setRequests){
+  getAllApplicantsFromTrainingGroup(groupId, setRequests) {
     return this.firedDB.collection("training-groups").doc(groupId).collection("applicants").orderBy("applicationDate", "desc")
-    .onSnapshot(snapshot => {
-      let res = []
-      snapshot.forEach((snap, index) => {
-        res.push({...snap.data(), uid: snap.id})
+      .onSnapshot(snapshot => {
+        let res = []
+        snapshot.forEach((snap, index) => {
+          res.push({ ...snap.data(), uid: snap.id })
+        })
+        setRequests(res)
       })
-      setRequests(res)
-    })
   }
 
-  removeApplicantFromTrainingGroup(groupId, userId){
+  removeApplicantFromTrainingGroup(groupId, userId) {
     this.firedDB.collection("training-groups").doc(groupId).collection("applicants").doc(userId).delete().catch(err => console.log(err))
   }
 
@@ -945,7 +942,7 @@ class Firebase {
 
   }
 
-  removeMemberFromTrainingGroup(groupId, memeberIds){
+  removeMemberFromTrainingGroup(groupId, memeberIds) {
     memeberIds.forEach((memberId, index) => {
       this.firedDB.collection("training-groups").doc(groupId).collection("members").doc(memberId).delete()
     })
@@ -975,20 +972,32 @@ class Firebase {
   getAllPublicTrainingGroups(setPublicGroups) {
     return this.firedDB.collection("training-groups").onSnapshot(snapshot => {
       let groups = []
-        snapshot.forEach((group, index) => {
-          let groupItem = group.data()
-          groupItem.groupId = group.id
-          groups.push(groupItem)
-        })
-        setPublicGroups(groups)
+      snapshot.forEach((group, index) => {
+        let groupItem = group.data()
+        groupItem.groupId = group.id
+        groups.push(groupItem)
+      })
+      setPublicGroups(groups)
     })
   }
 
   getTrainingGroupContent(groupId, setGroupContent) {
     return this.firedDB.collection("training-groups").doc(groupId)
       .onSnapshot((snapshot) => {
-        let group = {...snapshot.data(), id: snapshot.id}
+        let group = { ...snapshot.data(), id: snapshot.id }
         setGroupContent(group)
+      })
+  }
+
+  getPostsFromTrainingGroup(group, setPosts) {
+    const doc = group.isPrivate ? "private" : "public"
+    return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("posts").orderBy("dateCreated", "desc")
+      .onSnapshot(snapshot => {
+        let posts = []
+        snapshot.forEach((snap, index) => {
+          posts.push({ ...snap.data(), postId: snap.id })
+        })
+        setPosts(posts)
       })
   }
 
@@ -997,117 +1006,138 @@ class Firebase {
   }
 
   //function for fetching (listener) the workout plans from the training group (for owners only!)
-  getWorkoutPlansInTrainingGroup(group, setWorkoutPlans){
+  getWorkoutPlansInTrainingGroup(group, setWorkoutPlans) {
     const doc = group.isPrivate ? "private" : "public"
     return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans")
-    .onSnapshot(snapshot => {
-      let plans = []
-      snapshot.forEach((plan, index) => {
-        plans.push({...plan.data(), planId: plan.id})
+      .onSnapshot(snapshot => {
+        let plans = []
+        snapshot.forEach((plan, index) => {
+          plans.push({ ...plan.data(), planId: plan.id })
+        })
+        setWorkoutPlans(plans)
       })
-      setWorkoutPlans(plans)
-    })
   }
 
-  getMemberWorkoutPlansFromTrainingGroup(group, setMemberPlans){
+  getMemberWorkoutPlansFromTrainingGroup(group, setMemberPlans) {
     const doc = group.isPrivate ? "private" : "public"
     return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").where("recipients", "array-contains", this.getCurrentUserId())
-    .onSnapshot(snapshot => {
-      let member_plans = []
-      snapshot.forEach((member_plan, index) => {
-        member_plans.push({...member_plan.data(), planId: member_plan.id})
+      .onSnapshot(snapshot => {
+        let member_plans = []
+        snapshot.forEach((member_plan, index) => {
+          member_plans.push({ ...member_plan.data(), planId: member_plan.id })
+        })
+        setMemberPlans(member_plans)
       })
-      setMemberPlans(member_plans)
-    })
+  }
+
+  getWorkoutPlanById(group, planId, setPlanInfo) {
+    const doc = group.isPrivate ? "private" : "public"
+    return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId)
+      .onSnapshot(snapshot => {
+        if (snapshot.empty) {
+          return
+        }
+        setPlanInfo(snapshot.data())
+      })
   }
 
   //function for creating the workout plan in the training group
-  createWorkoutPlan(group, workoutPlan){
+  createWorkoutPlan(group, workoutPlan) {
     const doc = group.isPrivate ? "private" : "public"
     return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").add(workoutPlan).then(docRef => {
       return docRef.id
     })
   }
 
-  updateWorkoutPlan(group, planId, updates){
+  deleteRecipientFromTrainingPlan(group, planId, recipientId) {
+    const doc = group.isPrivate ? "private" : "public"
+    return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update({ recipients: firebase.firestore.FieldValue.arrayRemove(recipientId) })
+  }
+
+  addRecipientFromTrainingPlan(group, planId, recipientId) {
+    const doc = group.isPrivate ? "private" : "public"
+    return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update({ recipients: firebase.firestore.FieldValue.arrayUnion(recipientId) })
+  }
+
+  updateWorkoutPlan(group, planId, updates) {
     const doc = group.isPrivate ? "private" : "public"
     this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update(updates).catch(err => console.log(err))
   }
 
-  createDayWorkout(group, planId, workout){
+  createDayWorkout(group, planId, workout) {
     const doc = group.isPrivate ? "private" : "public"
     this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").add(workout)
-    .then((docRef)=>{
-      console.log("The workout has been successfuly added!")
-      let shortcut = {
-        title: workout.title,
-        dateStr: workout.dateStr
-      }
-      this.createDayWorkoutShortcut(group, planId, shortcut, docRef.id)
-  })
-    .catch(err => console.log(err))
+      .then((docRef) => {
+        console.log("The workout has been successfuly added!")
+        let shortcut = {
+          title: workout.title,
+          dateStr: workout.dateStr
+        }
+        this.createDayWorkoutShortcut(group, planId, shortcut, docRef.id)
+      })
+      .catch(err => console.log(err))
   }
 
-  createDayWorkoutShortcut(group, planId, shortcut, workoutId){
+  createDayWorkoutShortcut(group, planId, shortcut, workoutId) {
     const doc = group.isPrivate ? "private" : "public"
-    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).set(shortcut).then(()=>console.log("The workout shortcut has been successfuly added!")).catch(err => console.log(err))
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).set(shortcut).then(() => console.log("The workout shortcut has been successfuly added!")).catch(err => console.log(err))
   }
 
   //function for deleting the workout plan from the training group
-  deleteWorkoutPlanFromTrainingGroup(group, planId){
+  deleteWorkoutPlanFromTrainingGroup(group, planId) {
     const doc = group.isPrivate ? "private" : "public"
-    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).delete().then(()=>console.log("The workout plan has been successfuly deleted!")).catch(err => console.log(err))
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).delete().then(() => console.log("The workout plan has been successfuly deleted!")).catch(err => console.log(err))
   }
 
-  getDayWorkoutShortcutsFromPlan(group, planId, setDayWorkoutShortcuts){
+  getDayWorkoutShortcutsFromPlan(group, planId, setDayWorkoutShortcuts) {
     const doc = group.isPrivate ? "private" : "public"
     return this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts")
-    .onSnapshot(snapshot => {
-      let workouts_short = []
-      snapshot.forEach((snap, index) => {
-        let shortcut = {
-          title: snap.get("title"),
-          start: snap.get("dateStr"),
-          allDay: true,
-          workoutId: snap.id
-        }
-        workouts_short.push(shortcut)
+      .onSnapshot(snapshot => {
+        let workouts_short = []
+        snapshot.forEach((snap, index) => {
+          let shortcut = {
+            title: snap.get("title"),
+            start: snap.get("dateStr"),
+            allDay: true,
+            workoutId: snap.id
+          }
+          workouts_short.push(shortcut)
+        })
+        setDayWorkoutShortcuts(workouts_short)
       })
-      setDayWorkoutShortcuts(workouts_short)
-    })
   }
 
-  getWorkoutContent(group, planId, dateStr, setWorkoutContent){
+  getWorkoutContent(group, planId, dateStr, setWorkoutContent) {
     const doc = group.isPrivate ? "private" : "public"
     this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").where("dateStr", "==", dateStr)
-    .get()
-    .then(snapshot => {
-      let workout_content = []
-      snapshot.forEach((snap, index) => {
-        workout_content.push({...snap.data(), workoutId: snap.id})
+      .get()
+      .then(snapshot => {
+        let workout_content = []
+        snapshot.forEach((snap, index) => {
+          workout_content.push({ ...snap.data(), workoutId: snap.id })
+        })
+        setWorkoutContent(workout_content)
       })
-      setWorkoutContent(workout_content)
-    })
   }
 
-  updateWorkoutContent(group, planId, workoutId, updates){
+  updateWorkoutContent(group, planId, workoutId, updates) {
     const doc = group.isPrivate ? "private" : "public"
     this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").doc(workoutId).update(updates)
-    .then(()=>{
+      .then(() => {
 
-      let short_update = {}
-      if(updates.title){
-        short_update.title = updates.title
-      }
-      this.updateWorkoutShortcut(group, planId, workoutId, short_update)
+        let short_update = {}
+        if (updates.title) {
+          short_update.title = updates.title
+        }
+        this.updateWorkoutShortcut(group, planId, workoutId, short_update)
 
-    }).catch(err => console.log(err))
+      }).catch(err => console.log(err))
   }
 
-  updateWorkoutShortcut(group, planId, workoutId, updates){
+  updateWorkoutShortcut(group, planId, workoutId, updates) {
     const doc = group.isPrivate ? "private" : "public"
     this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).update(updates)
-    .catch(err => console.log(err))
+      .catch(err => console.log(err))
   }
 
   //<-----------------------FUNCTIONS FOR TRAINING GROUPS (END)----------------------->//
@@ -1187,6 +1217,36 @@ class Firebase {
     })
   }
 
+  getGroupChatsForTrainingGroup(groupId, setChats) {
+    this.firedDB.collection("chat-groups").where("groupId", "==", groupId)
+      .onSnapshot((snapshot) => {
+        let chats = []
+        snapshot.forEach((snap, index) => {
+          let chat = { ...snap.data(), chatId: snap.id }
+          chats.push(chat)
+        })
+        setChats(chats)
+      })
+  }
+
+
+  addNewGroupChat(groupId, members, title) {
+    let chatData = {
+      members: members,
+      groupId: groupId,
+      title: title,
+      dateCreated: Date.now()
+    }
+
+    console.log("Chat data: ")
+    console.log(chatData)
+    this.firedDB.collection("chat-groups").add(chatData)
+      .then((docRef) => {
+        console.log("The chat group has been successfully added!")
+      })
+      .catch(err => console.log(err))
+  }
+
   getUserInfoById(userId) {
     return this.firedDB.collection("users").doc(userId).get()
       .then((snapshot) => {
@@ -1203,6 +1263,99 @@ class Firebase {
       })
   }
   //<-----------------------FUNCTIONS FOR CHAT (END)----------------------->//
+
+  generateSalt(length){
+    const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    const salt = []
+    for(let i=0; i < length; i++){
+      console.log()
+      let index = Math.floor(Math.random()*(alphabet.length-1))
+      const char = alphabet[index]
+      salt.push(char)
+    }
+
+    return salt.join("")
+
+  }
+
+  async uploadPostImagesToGroup(group, files, caption) {
+    let url_list = []
+    const promises = [];
+
+    Array.from(files).forEach((file, index) => {
+      const NewUploadPromise = new Promise((resolve, reject) => {
+
+        const fileName = this.generateSalt(4)+Date.now()+".jpg"
+        console.log(file)
+        const uploadTask = this.storage.ref("/training-group-posts/"+group.id + `/${fileName}`).put(file)
+        return uploadTask.on("state_changed",
+          snapshot => {
+  
+          },
+          error => {
+            //errror function
+            console.log(error.message)
+            reject()
+          },
+          () => {
+            uploadTask.snapshot.ref.getDownloadURL().then(url => {
+              console.log(url)
+              //url_list.push(url)
+              resolve(url)
+            })
+            
+          }
+        )
+
+      })
+      promises.push(NewUploadPromise)
+
+      
+
+
+    })
+
+    
+    //add posts to firebase firestore
+    
+
+    Promise.all(promises)
+       .then(async () => {
+          let urls = []
+          console.log(promises)
+          promises.forEach(async (promise) => {
+            urls.push(await promise)
+          })
+         
+
+         return await urls
+       }).then(urls => {
+          const newPost = {
+            caption: caption,
+            photos: urls,
+            dateCreated: Date.now()
+          }
+          console.log(newPost)
+          this.addNewPostToTrainingGroup(group, newPost)
+       })
+       .catch(err => console.log(err.code));
+    //console.log(newPost)
+    //await 
+
+
+  }
+
+  addNewPostToTrainingGroup(group, post){
+    const doc = group.isPrivate ? "private" : "public"
+    this.firedDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("posts").add(post)
+    .catch(err => console.log(err))
+  }
+
+
+
+
 }
+
+
 
 export default new Firebase()

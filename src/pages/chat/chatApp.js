@@ -12,7 +12,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-
+import GroupChatItem from "./groupChatItem"
 
 import Chat from "./chat"
 import ChatItem from "./chatItem"
@@ -82,20 +82,24 @@ function ChatComponent(props) {
     useEffect(() => {
         //setAllMessages(init_messages)
         //firebase.getChatData("zYQ7D0Pt2qI07u5nKT3J", )
-        firebase.getAllUserChats(props.user.uid, setChatGroups)
-
-        return () => {
-            console.log("Unsubscribing from getAllUserChats listener!")
-            firebase.getAllUserChats(props.user.uid, setChatGroups)
+        if(props.mode === "GROUP"){
+            return firebase.getGroupChatsForTrainingGroup(props.group.id, setChatGroups)
+        }else{
+            return firebase.getAllUserChats(props.user.uid, setChatGroups)
         }
+        
     }, [props.user])
+
+    console.log("currentChat")
+    console.log(currentChat)
 
     useEffect(() => {
         //setChatGroups(init_chats)
-        firebase.getAllUsers({ role: "ALL" }, setAllUsers)
-        return () => {
-
+        if(props.mode !== "GROUP"){
+            firebase.getAllUsers({ role: "ALL" }, setAllUsers)
         }
+        
+        
     }, [])
 
     function toggleHidden() {
@@ -116,8 +120,7 @@ function ChatComponent(props) {
         return res
     }
 
-
-    function handleAddChat(member) {
+    function handleAddPersonalChat(member){
         console.log("Selected user: ")
         console.log(member)
         let chatExists = DoesChatExist(member.id)
@@ -143,6 +146,13 @@ function ChatComponent(props) {
         setOpen(false)
     }
 
+    function handleAddGroupChat(){
+        alert("Adding group chat!")
+        console.log(props.group.members)
+        const chatName = window.prompt("Enter chat name: ")
+        firebase.addNewGroupChat(props.group.id, props.group.members, chatName)
+    }
+
     function getMemberNames(members) {
         let names = []
         members.forEach((member) => {
@@ -159,7 +169,7 @@ function ChatComponent(props) {
             {allUsers.map((user, index) => {
                 return (
                     <ListItem button key={index} style={{ padding: 5, display: user.id === props.user.uid ? "none" : "block" }}>
-                        <Paper style={{ width: "100%", height: "60px", display: "flex", flexDirection: "row", alignItems: "center" }} onClick={() => handleAddChat(user)}>
+                        <Paper style={{ width: "100%", height: "60px", display: "flex", flexDirection: "row", alignItems: "center" }} onClick={() => handleAddPersonalChat(user)}>
                             <Avatar src={user && user.photoURL} />
                             <div>
                                 <h4 style={{ display: "inline", margin: 0 }}>{user.name + " " + user.surname}</h4>
@@ -178,13 +188,27 @@ function ChatComponent(props) {
 
             {chatGroups.map((chat, index) => {
                 let membersStr = getMemberNames(chat.members)
-                return (
-                    <ChatItem key={index} setCurrentChat={setCurrentChat} chat={chat} membersStr={membersStr}/>
-                )
+                if(props.mode === "GROUP"){
+                    return(
+                        <GroupChatItem key={index} setCurrentChat={setCurrentChat} chat={chat} membersStr={membersStr} mode={props.mode}/>
+                    )
+                }else{
+                    return (
+                        <ChatItem key={index} setCurrentChat={setCurrentChat} chat={chat} membersStr={membersStr} mode={props.mode}/>
+                    )
+                }
             })}
 
         </List>
     )
+
+    function handleButtonClick(){
+        if(props.mode === "GROUP"){
+            handleAddGroupChat()
+        }else{
+            setOpen(true)
+        }
+    }
 
     return (
         <div style={{ display: "flex", flexDirection: "row", width: "100%", height: "100%", flexWrap: "nowrap" }}>
@@ -205,7 +229,7 @@ function ChatComponent(props) {
                     </div>
                 }
                 <Paper square>
-                    <center><Button onClick={() => setOpen(true)}>Add new chat</Button></center>
+                    <center><Button onClick={handleButtonClick}>Add new chat</Button></center>
                 </Paper>
 
 
@@ -213,7 +237,7 @@ function ChatComponent(props) {
 
             <div className="CurrentChat" style={{ width: hidden ? "100%" : "75%", border: "1px solid black", position: "relative", height: "100%", overflow: "hidden hidden" }}>
 
-                <Chat toggleHidden={toggleHidden} chat={currentChat} />
+                <Chat toggleHidden={toggleHidden} chat={currentChat} mode={props.mode}/>
 
             </div>
         </div>

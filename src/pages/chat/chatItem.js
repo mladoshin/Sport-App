@@ -12,24 +12,27 @@ function ChatItem(props) {
     const [uptodateChat, setUptodateChat] = useState(props.chat)
 
     useEffect(()=>{
-        let memberId = chat.members[0].uid
-        firebase.getUserInfoById(memberId).then(member => {
-            setUserPhotoURL(member.photoURL)
-            setUserName(member.name + " " + member.surname)
-            let members = [{...props.chat.members[0], photoURL: member.photoURL, name: member.name, surname: member.surname}]
+        if (props.mode !== "GROUP"){
+            let memberId = chat.members[0].uid
+            firebase.getUserInfoById(memberId).then(member => {
+                setUserPhotoURL(member.photoURL)
+                setUserName(member.name + " " + member.surname)
+                let members = [{...props.chat.members[0], photoURL: member.photoURL, name: member.name, surname: member.surname}]
 
-            setUptodateChat({...props.chat, members: members})
-        })
+                setUptodateChat({...props.chat, members: members})
+            })
+        }
+        
         
     }, [props.chat])
 
     return (
-        <ListItem button style={{ padding: 5, display: userPhotoURL ? "block" : "none"}}>
+        <ListItem button style={{ padding: 5}}>
             
             <Paper style={{ width: "100%", height: "60px", display: "flex", flexDirection: "row", alignItems: "center" }} onClick={() => setCurrentChat(uptodateChat)}>
                 <Avatar src={userPhotoURL} />
                 <div>
-                    <h4 style={{ display: "inline", margin: 0 }}>{userName}</h4>
+                    <h4 style={{ display: "inline", margin: 0 }}>{props.mode !== "GROUP" ? userName : props.chat.members.join(", ")}</h4>
                     <p>{chat.lastMessage}</p>
                 </div>
 
