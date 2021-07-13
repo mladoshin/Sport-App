@@ -15,7 +15,7 @@ exports.sayHello = functions.https.onCall((data, context) => {
 })
 
 exports.addUserRole = functions.https.onCall((data, context) => {
-    return admin.autEmailgetUserByEmail(data.email).then(user => {
+    return admin.auth().getUserByEmail(data.email).then(user => {
         return admin.auth().setCustomUserClaims(user.uid, {
             role: data.role
         });
@@ -31,7 +31,7 @@ exports.addUserRole = functions.https.onCall((data, context) => {
 
 exports.getUserIP = functions.https.onCall((data, context) => {
 
-    return admin.autEmailgetUserByEmail(data.email).then(user => {
+    return admin.auth().getUserByEmail(data.email).then(user => {
         return user.uid + "/user-info/geolocation"
     }).then(ref => {
         return admin

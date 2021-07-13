@@ -36,9 +36,10 @@ const useStyles = makeStyles((theme) => ({
 
 //dialog form
 function DialogForm(props) {
+    console.log(props)
     const classes = useStyles();
     const [email, setEmail] = useState("")
-    const [selectedMemberIDs, setSelectedMemberIDs] = useState(props.payload.members)
+    const [selectedMemberIDs, setSelectedMemberIDs] = useState(props.payload.members ? props.payload.members : [])
     const [members, setMembers] = useState([])
     const [requests, setRequests] = useState([])
     const allAthletes = props.allAthletes

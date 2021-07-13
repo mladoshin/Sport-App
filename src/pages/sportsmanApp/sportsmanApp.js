@@ -82,20 +82,13 @@ function SportsmanApp(props) {
 
 const mapStateToProps = state => {
   return {
-    user: state.user,
-    //theme: state.theme,
-    //goals: state.goals,
-    //goalCategories: state.goalCategories
+    user: state.user
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
-    setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj }),
-    //loadGoals: (arr) => dispatch({ type: "GOALS/LOAD", payload: arr }),
-    //loadCategories: (arr) => dispatch({ type: "GOALS/CATEGORY/LOAD", payload: arr }),
-    //loadAvatar: (url) => dispatch({ type: "AVATAR/LOAD", payload: url }),
-    //loadNotifications: (arr) => dispatch({ type: "NOTIFICATION/LOAD", payload: arr })
+    setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj })
   }
 }
 

@@ -233,6 +233,7 @@ function SignUpPage(props) {
     );
 }
 
+// BUG
 //function for writing user-information into the database
 function putUserDataToDB(props) {
     const uid = firebase.getCurrentUserId()
