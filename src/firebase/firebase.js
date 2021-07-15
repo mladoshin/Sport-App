@@ -6,7 +6,7 @@ import "firebase/functions"
 require("firebase/firestore");
 
 
-//firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAo_UVgQnHQ3bkaGO6O4y5ZaF5oOyb67h0",
   authDomain: "sport-app-16c82.firebaseapp.com",
@@ -1260,7 +1260,7 @@ class Firebase {
         return user
       }).then(user => {
         return user
-      })
+      }).catch(err => console.log(err))
   }
   //<-----------------------FUNCTIONS FOR CHAT (END)----------------------->//
 

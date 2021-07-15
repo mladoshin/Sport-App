@@ -42,6 +42,7 @@ function HomeNavbar(props) {
         } else if (role == "SPORTSMAN") {
             props.goToPage("/sportsmanApp/userId=" + props.user.uid + "/profile")
         }
+        
     }
 
     //function for redirecting to actual app (according to user's role)

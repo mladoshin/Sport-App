@@ -236,22 +236,23 @@ function SignUpPage(props) {
 // BUG
 //function for writing user-information into the database
 function putUserDataToDB(props) {
+    console.log("putUserDataToDB has started")
     const uid = firebase.getCurrentUserId()
-
-    getUserData().then((geo) => {
+    console.log("uid: "+uid)
+    // getUserData().then((geo) => {
         
-        let geolocation = {
-            country: geo.country,
-            countryCode: geo.countryCode,
-            regionName: geo.regionName,
-            city: geo.city,
-            zip: geo.zip,
-            lat: geo.lat,
-            lon: geo.lon,
-            timezone: geo.timezone,
-            org: geo.org,
-            ip: geo.query
-        }
+        // let geolocation = {
+        //     country: geo.country,
+        //     countryCode: geo.countryCode,
+        //     regionName: geo.regionName,
+        //     city: geo.city,
+        //     zip: geo.zip,
+        //     lat: geo.lat,
+        //     lon: geo.lon,
+        //     timezone: geo.timezone,
+        //     org: geo.org,
+        //     ip: geo.query
+        // }
         
         //writing into realtime database
         firebase.firedDB.collection("users").doc(uid).set({
@@ -267,17 +268,17 @@ function putUserDataToDB(props) {
         firebase.firedDB.collection("users").doc(uid).collection("private").doc("preferences").set({
             appTheme: "light"
         })
-        firebase.firedDB.collection("users").doc(uid).collection("private").doc("geolocation").set(geolocation)
-    })
+        // firebase.firedDB.collection("users").doc(uid).collection("private").doc("geolocation").set(geolocation)
+    // })
 
 }
 
 //get the geolocation json data from the api
-async function getUserData() {
-    let response = await fetch("http://ip-api.com/json/")
-    const json = await response.json()
-    return json
-}
+// async function getUserData() {
+//     let response = await fetch("http://ip-api.com/json/")
+//     const json = await response.json()
+//     return json
+// }
 
 //async register function
 async function onRegister(e, history, name, surname, email, password, isCoach) {
@@ -298,7 +299,9 @@ async function onRegister(e, history, name, surname, email, password, isCoach) {
             history.replace("/coach-login")
         }
         
+
         //Write to database
+        
         putUserDataToDB({name: name, surname: surname, email: email, isCoach: isCoach})
     } catch (error) {
         //display an error

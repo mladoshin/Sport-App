@@ -1,11 +1,12 @@
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
-import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
+import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar, FormControlLabel, Switch } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
 import firebase from '../../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
+import ProfilePage from "./profile"
 
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
@@ -65,6 +66,9 @@ function CoachApp(props) {
           <h3>Welcome, coach {props.user.displayName}</h3>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
+
+        <ProfilePage/>
+
         <button onClick={() => {
           firebase.logout()
           props.history.replace("/")

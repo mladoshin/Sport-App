@@ -89,12 +89,20 @@ function MobileNavbar(props) {
     function openProfile() {
         let role = props.user.claims.role
         
+        // if (role == "ADMIN") {
+        //     props.history.push("/adminApp/profile")
+        // } else if (role == "COACH") {
+        //     props.history.push("/coachApp/coachId=" + props.user.uid + "/profile")
+        // } else if (role == "SPORTSMAN") {
+        //     props.history.push("/sportsmanApp/userId=" + props.user.uid + "/profile")
+        // }
+
         if (role == "ADMIN") {
-            props.history.push("/adminApp/profile")
+            props.history.push("/adminApp")
         } else if (role == "COACH") {
-            props.history.push("/coachApp/coachId=" + props.user.uid + "/profile")
+            props.history.push("/coachApp/coachId=" + props.user.uid)
         } else if (role == "SPORTSMAN") {
-            props.history.push("/sportsmanApp/userId=" + props.user.uid + "/profile")
+            props.history.push("/sportsmanApp/userId=" + props.user.uid)
         }
     }
 

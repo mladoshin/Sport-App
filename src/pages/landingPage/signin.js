@@ -46,8 +46,6 @@ function SignInPage(props) {
     if (!firebase.getCurrentUserId()) {
       login(e, email, password)
       .then(() => redirectToApp())
-      .then(() => {return firebase.getUserIP({email: email})})
-      .then(ugeo => checkIP(ugeo))
       .catch(error => console.log(error))
     } else {
       alert("Sign out before signing in!")
@@ -159,23 +157,25 @@ function SignInPage(props) {
   );
 }
 
-//function for fetching the geolocation information about a user
-async function getUserData() {
-  let response = await fetch("http://ip-api.com/json/")
-  const json = await response.json()
-  return json
-}
+// //function for fetching the geolocation information about a user
+// async function getUserData() {
+//   let response = await fetch("http://ip-api.com/json/")
+//   const json = await response.json()
+//   return json
+// }
 
-//function for checking the current ip and comparing it to the original from realtime database
-function checkIP(ugeo){
-  getUserData().then(geo => {
-    if(geo.ip!==ugeo.ip && geo.city !== ugeo.city){
-      console.log("The account has been accessed from the different place")
-    }else{
-      console.log("The IP check is successful!")
-    }
-  })
-}
+// //function for checking the current ip and comparing it to the original from realtime database
+// function checkIP(ugeo){
+//   getUserData().then(geo => {
+//     if(geo.ip!==ugeo.ip && geo.city !== ugeo.city){
+//       console.log("The account has been accessed from the different place")
+//     }else{
+//       console.log("The IP check is successful!")
+//     }
+//   })
+// }
+
+
 //async function for logging in 
 async function login(e, email, password) {
   e.preventDefault()
