@@ -1,28 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { connect } from 'react-redux'
 import { withRouter } from "react-router-dom";
-import { makeStyles, useTheme } from '@material-ui/core/styles';
-import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
-import { AppBar, Toolbar, Drawer, Typography, Button, IconButton, CssBaseline, List, ListItem, Divider, ListItemIcon, ListItemText } from '@material-ui/core';
-//import MenuIcon from '@material-ui/icons/Menu';
-
-//import MUIDrawer from './drawer'
-//import NotificationMenu from "../notifications/notificationMenu"
-//import ProfileModalWindow from '../profile/profileModalWindow'
-//import AccountMenu from './accountMenu'
-//import AccountToolbar from './accountToolbar'
+import { useTheme } from '@material-ui/core/styles';
 
 
-import clsx from 'clsx';
-
-//icons
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import MenuIcon from '@material-ui/icons/Menu';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import MailIcon from '@material-ui/icons/Mail';
+// Import a navbar for mobile devices
 import MobileNavbar from "./mobileNavbar";
-import MiniDrawer from "./desktopNavbar"
+
+// Import a navbar for desktop devices
+import DesktopNavbar from "./desktopNavbar"
 
 //menu items for coach app
 const coachMenu = [
@@ -52,7 +38,10 @@ const sportsmanMenu = [
   {title: "Training groups", path: "/training-groups"},
   {title: "Diary", path: "/diary"},
   {title: "Goals", path: "/goals"},
-  {title: "ToDos", path: "/todos"}
+  {title: "ToDos", path: "/todos"},
+  {title: "Calendar", path: "/calendar"},
+  {title: "Notes", path: "/notes"},
+  {title: "Workout builder", path: "/workouts"},
 ]
 
 function NavBar(props) {
@@ -74,14 +63,12 @@ function NavBar(props) {
     
   }, [props.user.claims])
 
-  //console.log(menuItems)
 
-  //console.log(props.mobile)
-
+  // if the device is mobile, then render a mobile navbar, else render a desktop version of a navbar
   if (props.mobile){
     return <MobileNavbar open={open} setOpen={setOpen} user={props.user} menuItems={menuItems}>{props.children}</MobileNavbar>
   }else{
-    return <MiniDrawer open={open} setOpen={setOpen} user={props.user} menuItems={menuItems}>{props.children}</MiniDrawer>
+    return <DesktopNavbar open={open} setOpen={setOpen} user={props.user} menuItems={menuItems}>{props.children}</DesktopNavbar>
   }
   
 }
@@ -98,11 +85,7 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
   return {
     removeUserInfo: () => { dispatch({ type: "USER/LOADINFO", payload: { id: null, auth: false } }) },
-    setTheme: (str) => dispatch({ type: "THEME/CHANGE", payload: str }),
-    //clearGoalsState: () => dispatch({ type: "GOALS/LOAD", payload: {} }),
-    //clearCategoriesState: () => dispatch({ type: "GOALS/CATEGORY/LOAD", payload: [] }),
-    //clearAvatar: ()=>dispatch({ type: "AVATAR/LOAD", payload: "" }),
-    //clearNotifications: ()=>dispatch({ type: "NOTIFICATION/LOAD", payload: [] })
+    setTheme: (str) => dispatch({ type: "THEME/CHANGE", payload: str })
   }
 }
 

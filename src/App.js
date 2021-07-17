@@ -88,6 +88,9 @@ function App(props) {
           <Route exact path="/sportsmanApp/userId=:userId/training-groups" render={() => <Navbar><TrainingGroupsPage type="SPORTSMAN"/></Navbar>} />
           <Route exact path="/sportsmanApp/userId=:userId/training-groups/groupId=:groupId" render={() => <Navbar><TrainingGroupPage type="SPORTSMAN"/></Navbar>} />
           <Route exact path="/sportsmanApp/userId=:userId/chats" render={() => <Navbar><ChatPage/></Navbar>} />
+          <Route exact path="/sportsmanApp/userId=:userId/calendar" render={() => <Navbar><CalendarPage/></Navbar>} />
+          <Route exact path="/sportsmanApp/userId=:userId/notes" render={() => <Navbar><NotesPage/></Navbar>} />
+          <Route exact path="/sportsmanApp/userId=:userId/workouts" render={() => <Navbar><WorkoutsPage/></Navbar>} />
 
           {/* COACH APP ROUTES*/}
           <Route exact path="/coachApp/coachId=:coachId" render={() => <Navbar><CoachApp /></Navbar>} />

@@ -1,17 +1,20 @@
-import React, {useState, useEffect} from "react"
-import { connect } from 'react-redux'
-import {Paper, Typography, CssBaseline} from '@material-ui/core'
-import { Container } from '@material-ui/core';
+// <----------  This is a landing page (Main page) at top level route "/" ---------->
+
+import React from "react"
+import {Container, Typography, CssBaseline} from '@material-ui/core'
 import {withRouter} from "react-router-dom"
-import NavBar from "../../components/navigation/navbar"
+
+// Importing navbar for landing page
 import HomeNavbar from "../../components/navigation/homeNavbar"
-import firebase from '../../firebase/firebase';
 
 //Home page for landing page
 function HomePage(props){  
     return(
         <React.Fragment>
+            {/* Top navbar component */}
             <HomeNavbar goToPage={props.history.push}/>
+
+            {/* Container for the site's content */}
             <Container component="main" maxWidth="xs">
                 <CssBaseline/>
                 <Typography variant="h3">This is home page!</Typography>
@@ -22,18 +25,4 @@ function HomePage(props){
     );
 }
 
-const mapStateToProps = state => {
-    return {
-      user: state.user
-    }
-  }
-  
-  /*const mapDispatchToProps = dispatch => {
-    return {
-      setIsTouchable: (val) => dispatch({ type: "ISTOUCHABLE/SET", payload: val }),
-      setTheme: (theme) => dispatch({ type: "THEME/CHANGE", payload: theme }),
-      setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj })
-    }
-  }*/
-
-export default connect(mapStateToProps, null)(withRouter(HomePage));
+export default withRouter(HomePage);
