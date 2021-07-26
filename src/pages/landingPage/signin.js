@@ -3,7 +3,6 @@ import React, { useState } from "react"
 import firebase from '../../firebase/firebase'
 import { Typography, Avatar, Button, CssBaseline, TextField, FormControlLabel, Checkbox, Link, Grid, Container } from '@material-ui/core'
 import { withRouter } from "react-router-dom"
-import HomeNavbar from "../../components/navigation/homeNavbar"
 
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import { makeStyles } from '@material-ui/core/styles';
@@ -84,7 +83,7 @@ function SignInPage(props) {
 
   return (
     <React.Fragment>
-      <HomeNavbar goToPage={props.history.push} />
+      {/* <HomeNavbar goToPage={props.history.push} /> */}
 
       <Container component="main" maxWidth="xs">
         <CssBaseline />

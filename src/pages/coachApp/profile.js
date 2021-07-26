@@ -48,9 +48,6 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-
-
-
 function CoachProfile(props) {
   //state for the dialog (avatar upload)
   const [fileDialogOpen, setFileDialogOpen] = useState(false)
@@ -75,7 +72,6 @@ function CoachProfile(props) {
     }else{
       //set light theme
       props.setTheme("light")
-
     }
   }
 

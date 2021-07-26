@@ -5,7 +5,7 @@ import {goalsReducer} from './goalsReducer'
 import { categoryReducer } from './categoryReducer'
 import { avatarReducer } from './avatarReducer'
 import { notificationReducer } from './notificationReducer'
-import { isTouchableReducer } from './isTouchableReducer'
+import { isMobileReducer } from './isMobileReducer'
 import { userPreferencesReducer } from "./userPreferencesReducer"
 
 export const rootReducer = combineReducers({
@@ -15,6 +15,6 @@ export const rootReducer = combineReducers({
   goalCategories: categoryReducer,
   userAvatar: avatarReducer,
   notifications: notificationReducer,
-  isTouchable: isTouchableReducer,
+  isMobile: isMobileReducer,
   userPreferences: userPreferencesReducer
 })

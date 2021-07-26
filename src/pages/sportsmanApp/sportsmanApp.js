@@ -7,6 +7,7 @@ import firebase from '../../firebase/firebase';
 import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 
+import ProfilePage from "./profile"
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -67,6 +68,7 @@ function SportsmanApp(props) {
           <h2>Welcome {props.user.displayName}!</h2>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
+        <ProfilePage/>
         <button onClick={()=>{
           firebase.logout()
           props.history.replace("/")

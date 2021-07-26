@@ -1,5 +1,5 @@
 const widthThreshold = 700
-function is_touchable() {
+function isMobile() {
     const screenWidth = window.innerWidth
     
     if(screenWidth < widthThreshold){
@@ -9,4 +9,4 @@ function is_touchable() {
     
 }
 
-export default is_touchable
+export default isMobile

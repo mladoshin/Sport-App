@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux'
-import { Switch, Route, Redirect, BrowserRouter, withRouter } from "react-router-dom";
+import { Switch, Route, BrowserRouter } from "react-router-dom";
 import { createMuiTheme, ThemeProvider } from '@material-ui/core';
 import firebase from './firebase/firebase'
-import isTouchable from "./checkDeviceFunction/isTouchable"
 
 import HomePage from "./pages/landingPage/homePage"
 import SignInPage from "./pages/landingPage/signin"
@@ -13,7 +12,7 @@ import ErrorPage from "./pages/404"
 import SportsmanApp from './pages/sportsmanApp/sportsmanApp';
 import CoachApp from './pages/coachApp/coachApp';
 import AdminApp from './pages/adminApp/adminApp';
-import MiniDrawer from './components/navigation/desktopNavbar';
+
 import AdminProfile from './pages/adminApp/profile';
 import CoachProfile from './pages/coachApp/profile';
 import SportsmanProfile from './pages/sportsmanApp/profile';
@@ -28,6 +27,11 @@ import ChatPage from "./pages/chat/chatPage"
 //page for individual group
 import TrainingGroupPage from './pages/trainingGroups/TrainingGroupPage';
 import WorkoutPlanPage from './pages/coachApp/workoutPlanPage';
+
+import isMobile from './checkDeviceFunction/isMobile';
+
+// import the app config file
+import './config';
 
 //APP THEMES (DARK AND LIGHT)
 const DarkTheme = createMuiTheme({
@@ -44,43 +48,60 @@ const LightTheme = createMuiTheme({
 
 function App(props) {
 
-  //useEffect for loading user's preferences
-  useEffect(() => {
-    //console.log(props.user)
+  // //useEffect for loading user's preferences
+  // useEffect(() => {
+  //   //console.log(props.user)
 
-    //load user's preferences from firebase firestore
-    firebase.getCurrentUserPreferences(props.setUserPreferences)
-  }, [props.user])
+  //   //load user's preferences from firebase firestore
+  //   firebase.getCurrentUserPreferences(props.setUserPreferences)
+  // }, [props.user])
 
-  console.log(props.userPreferences)
+  // console.log(props.userPreferences)
 
-  //useEffect for setting the app theme
-  useEffect(()=> {
-    props.setTheme(props.userPreferences.appTheme)
-  }, [props.userPreferences.appTheme])
+  // //useEffect for setting the app theme
+  // useEffect(()=> {
+  //   //props.setTheme(props.userPreferences.appTheme)
+  // }, [props.userPreferences.appTheme])
 
   //Initial useEffect (called only once), attach the user listener and set the device type (click or touch)
   useEffect(() => {
     //set the isTouchabe (from isTouchable function) to redux
-    props.setIsTouchable(isTouchable())
+    props.setIsMobile(isMobile())
 
     //attach a listener for user (get user's public information)
     firebase.getCurrentUser(props.setUser)
   }, [])
 
-  //console.log(props.theme)
+  // screen size event listener
+  useEffect(()=>{
+    window.addEventListener('resize', onScreenSizeChange);
+  }, [])
 
-  //console.log(props.theme)
+  // function which changes isMobile in redux state if the screen size changes to mobile or desktop
+  function onScreenSizeChange(e){
+    const width = e.currentTarget.innerWidth
+    
+    if (width < global.config.app.responsiveThreshold){
+      // mobile device
+
+      props.setIsMobile(true)
+
+     
+    }else{
+      // desktop device
+
+      props.setIsMobile(false)
+
+    }
+  }
 
   return (
     <ThemeProvider theme={props.theme.colorMode === "dark" ? DarkTheme : LightTheme}>
       <BrowserRouter>
         <Switch>
-          <Route exact path="/" render={() => <HomePage />} />
-          <Route exact path="/sportsman-login" render={() => <SignInPage isCoach={false} />} />
-          <Route exact path="/coach-login" render={() => <SignInPage isCoach={true} />} />
-          <Route exact path="/signup" render={() => <SignUpPage />} />
-          <Route exact path="/coach-login" render={() => <SignInPage />} />
+          <Route exact path="/" render={() => <Navbar><HomePage/></Navbar>} />
+          <Route exact path="/login" render={() => <Navbar><SignInPage/></Navbar>} />
+          <Route exact path="/signup" render={() => <Navbar><SignUpPage/></Navbar>} />
 
           {/* SPORTSMAN APP ROUTES*/}
           <Route exact path="/sportsmanApp/userId=:userId" render={() => <Navbar><SportsmanApp /></Navbar>} />
@@ -129,7 +150,7 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
   return {
-    setIsTouchable: (val) => dispatch({ type: "ISTOUCHABLE/SET", payload: val }),
+    setIsMobile: (val) => dispatch({ type: "ISMOBILE/SET", payload: val }),
     setTheme: (theme) => dispatch({ type: "THEME/CHANGE", payload: theme }),
     setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj }),
     setUserPreferences: (obj) => dispatch({type: "USER/LOAD-PREFERENCES", payload: obj})

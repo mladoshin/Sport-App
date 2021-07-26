@@ -5,10 +5,10 @@ import { useTheme } from '@material-ui/core/styles';
 
 
 // Import a navbar for mobile devices
-import MobileNavbar from "./mobileNavbar";
+import MobileNavbar from "./mobile/mobileNavbar"
 
 // Import a navbar for desktop devices
-import DesktopNavbar from "./desktopNavbar"
+import DesktopNavbar from "./desktop/desktopNavbar"
 
 //menu items for coach app
 const coachMenu = [
@@ -44,6 +44,13 @@ const sportsmanMenu = [
   {title: "Workout builder", path: "/workouts"},
 ]
 
+const homeMenuItems = [
+  {title: "Home", path: "/"},
+  {title: "About Us", path: "/aboutUs"},
+  {title: "Contacts", path: "/contacts"},
+  {title: "Login", path: "/login"},
+]
+
 function NavBar(props) {
   const theme = useTheme();
   const [menuItems, setMenuItems] = useState([])
@@ -59,6 +66,8 @@ function NavBar(props) {
       }else if(props.user.claims.role == "SPORTSMAN"){
         setMenuItems(sportsmanMenu)
       }
+    }else{
+      setMenuItems(homeMenuItems)
     }
     
   }, [props.user.claims])
@@ -78,7 +87,7 @@ const mapStateToProps = state => {
   return {
     user: state.user,
     theme: state.theme,
-    mobile: state.isTouchable
+    mobile: state.isMobile
   }
 }
 

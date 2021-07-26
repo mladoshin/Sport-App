@@ -56,11 +56,13 @@ exports.getUserIP = functions.https.onCall((data, context) => {
     })
 })
 
+// user delete trigger
 exports.userDeleted = functions.auth.user().onDelete(user => {
     console.log("Email: " + user.email);
-    return admin.database().ref("/" + user.uid + "/").remove()
+    return fireDB.collection("users").doc(user.uid).delete().catch(err => functions.logger.info(err, { structuredData: true }))
 })
 
+// user create tigger
 exports.userCreated = functions.auth.user().onCreate(user => {
     console.log("Email: " + user.email);
 

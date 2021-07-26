@@ -8,6 +8,8 @@ import MenuIcon from '@material-ui/icons/Menu';
 import { withRouter } from 'react-router-dom';
 import NotificationsRoundedIcon from '@material-ui/icons/NotificationsRounded';
 
+import MobileDrawer from "./mobileDrawer"
+import MobileAppBar from './mobileAppBar';
 
 
 //drawer width constant
@@ -106,7 +108,7 @@ function MobileNavbar(props) {
     //function for redirecting to the right page, after user have clicked on the menu item
     function handleMenuButtonClick(destination) {
         //user's role 
-        let role = props.user.claims.role
+        let role = props.user.claims && props.user.claims.role
         
         if (role == "ADMIN") {
             props.history.push("/adminApp" + destination)
@@ -117,6 +119,10 @@ function MobileNavbar(props) {
         } else if (role == "SPORTSMAN") {      
             props.history.push("/sportsmanApp/userId=" + props.user.uid + "" + destination)
             toggleDrawer(false)
+        }else{
+            // if the user is not logged in
+            props.history.push(destination)
+            toggleDrawer(false)
         }
     }
 
@@ -124,7 +130,9 @@ function MobileNavbar(props) {
         <div>
             <React.Fragment>
                 <CssBaseline />
-                <AppBar
+                <MobileAppBar open={open} toggleDrawer={toggleDrawer} openProfile={openProfile} user={props.user} goToPage={props.history.push}/>
+
+                {/* <AppBar
                     position="fixed"
                     className={clsx(classes.appBar)}
                 >
@@ -146,24 +154,9 @@ function MobileNavbar(props) {
                             <IconButton style={{ marginLeft: 0 }} onClick={() => openProfile()}><Avatar alt="User" src={props.user.photoURL} className={classes.avatar}>{props.user.name}</Avatar></IconButton>
                         </div>
                     </Toolbar>
-                </AppBar>
-
-                <Drawer anchor={"left"} open={open} onClose={() => toggleDrawer(false)}>
-                    <List>
-                        <ListItem>
-                            <ListItemText>LOGO</ListItemText>
-                        </ListItem>
-
-                        {props.menuItems.map((menuItem, index) => {
-                            return (
-                                <ListItem button key={index} onClick={() => handleMenuButtonClick(menuItem.path)}>
-                                    <ListItemIcon><MailIcon /></ListItemIcon>
-                                    <ListItemText>{menuItem.title}</ListItemText>
-                                </ListItem>
-                            )
-                        })}
-                    </List>
-                </Drawer>
+                </AppBar> */}
+                
+                <MobileDrawer open={open} setOpen={setOpen} menuItems={props.menuItems} goToPage={props.history.push} handleMenuButtonClick={handleMenuButtonClick}/>
 
             </React.Fragment>
 

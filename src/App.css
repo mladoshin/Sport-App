@@ -1,1 +1,18 @@
+.homeMenuLink{
+    color: white;
+    cursor: pointer;
+    width: 130px;
+    text-align: center;
+    transition: color 300ms ease-in-out;
+}
 
+.homeMenuLink:hover{
+    color: rgb(149, 145, 145);
+    transition: color 300ms ease-in-out;
+}
+
+.brandLogo{
+    color: black;
+    font-weight: 600;
+    cursor: pointer;
+}

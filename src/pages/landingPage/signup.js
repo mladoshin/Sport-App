@@ -1,21 +1,15 @@
 import React, { useState } from "react"
-import firebase from '../../firebase/firebase'
-import { Typography, Switch, FormControlLabel, FormControl, InputLabel, Select } from '@material-ui/core'
-import HomeNavbar from "../../components/navigation/homeNavbar"
+import { Container, Typography, Switch, FormControlLabel, FormControl, InputLabel, Select, Avatar, Button, CssBaseline, TextField, Checkbox, Link, Grid } from '@material-ui/core'
 import { withRouter } from "react-router-dom"
-
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import TextField from '@material-ui/core/TextField';
-import Checkbox from '@material-ui/core/Checkbox';
-import Link from '@material-ui/core/Link';
-import Grid from '@material-ui/core/Grid';
-
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import { makeStyles } from '@material-ui/core/styles';
-import Container from '@material-ui/core/Container';
 
+// Importing icons
+import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+
+// Importing firebase object to connect to backend
+import firebase from '../../firebase/firebase'
+
+// declaring styles
 const useStyles = makeStyles((theme) => ({
     paper: {
         marginTop: theme.spacing(8),
@@ -53,10 +47,10 @@ function SignUpPage(props) {
     const [isCoach, setIsCoach] = useState(false)
     const [discipline, setDiscipline] = useState("")
 
-    console.log("isCoach = "+isCoach)
+    console.log("isCoach = " + isCoach)
 
     //function for clearing all the states after switching between coach signup and sportsman signup
-    function clearState(){
+    function clearState() {
         setFirstName("")
         setLastName("")
         setEmail("")
@@ -65,12 +59,12 @@ function SignUpPage(props) {
     }
 
     //function for switching between coach signup and sportsman signup
-    function switchPage(val){
+    function switchPage(val) {
         clearState()
         setIsCoach(val)
     }
 
-    function handleRegisterBtn_Click(e){
+    function handleRegisterBtn_Click(e) {
         //check if the user is signed out
         if (!firebase.getCurrentUserId()) {
             //register new user
@@ -81,16 +75,16 @@ function SignUpPage(props) {
                 console.log("The user has been logged out after registration successfully!")
 
                 //adding the coach role to custom claims if the user signed up for the coach account
-                if (isCoach && email!=="admin@admin.com"){
+                if (isCoach && email !== "admin@admin.com") {
                     firebase.addCoachRole(email).then(res => console.log(res))
-                }else if(!isCoach){
+                } else if (!isCoach) {
                     firebase.addSportsmanRole(email).then(res => console.log(res))
-                }else if(email=="admin@admin.com" && !isCoach){
+                } else if (email == "admin@admin.com" && !isCoach) {
                     firebase.addAdminRole(email).then(res => console.log(res))
                 }
 
-                
-                
+
+
             })
         } else {
             //the user is already signed in
@@ -102,7 +96,7 @@ function SignUpPage(props) {
 
     return (
         <React.Fragment>
-            <HomeNavbar goToPage={props.history.push} />
+            {/* <HomeNavbar goToPage={props.history.push} /> */}
             <Container component="main" maxWidth="xs">
                 <CssBaseline />
                 <div className={classes.paper}>
@@ -121,6 +115,7 @@ function SignUpPage(props) {
                     <form className={classes.form} noValidate>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
+                                {/* Name text input */}
                                 <TextField
                                     autoComplete="fname"
                                     name="firstName"
@@ -136,6 +131,7 @@ function SignUpPage(props) {
                             </Grid>
 
                             <Grid item xs={12} sm={6}>
+                                {/* Surname text input */}
                                 <TextField
                                     variant="outlined"
                                     required
@@ -153,18 +149,19 @@ function SignUpPage(props) {
                                 <Grid item xs={12}>
                                     <FormControl variant="outlined" className={classes.formControl}>
                                         <InputLabel htmlFor="outlined-age-native-simple">Discipline</InputLabel>
+                                        {/* Select input ONLY FOR COACHES */}
                                         <Select
                                             native
                                             value={discipline}
-                                            onChange={(e)=>setDiscipline(e.target.value)}
+                                            onChange={(e) => setDiscipline(e.target.value)}
                                             label="Discipline"
                                             inputProps={{
                                                 name: 'discipline',
                                                 id: 'outlined-age-native-simple',
                                             }}
                                         >
-                                            <option aria-label="None" value=""/>
-                                            <option  value="none">None</option>
+                                            <option aria-label="None" value="" />
+                                            <option value="none">None</option>
                                             <option value={"TrackAndField"}>Track and Field</option>
                                             <option value={"StrengthAndConditioning"}>Strength and Conditioning</option>
                                             <option value={"Running"}>Running</option>
@@ -173,6 +170,7 @@ function SignUpPage(props) {
                                 </Grid> : null}
 
                             <Grid item xs={12}>
+                                {/* Email text input */}
                                 <TextField
                                     variant="outlined"
                                     required
@@ -186,6 +184,7 @@ function SignUpPage(props) {
                                 />
                             </Grid>
                             <Grid item xs={12}>
+                                {/* Password text input */}
                                 <TextField
                                     variant="outlined"
                                     required
@@ -200,12 +199,14 @@ function SignUpPage(props) {
                                 />
                             </Grid>
                             <Grid item xs={12}>
+                                {/* Checkbox input (advertisement) */}
                                 <FormControlLabel
                                     control={<Checkbox value="allowExtraEmails" color="primary" />}
                                     label="I want to receive inspiration, marketing promotions and updates via email."
                                 />
                             </Grid>
                         </Grid>
+                        {/* SignUp button */}
                         <Button
                             type="submit"
                             fullWidth
@@ -215,12 +216,13 @@ function SignUpPage(props) {
                             onClick={(e) => handleRegisterBtn_Click(e)}
                         >
                             Sign Up
-                    </Button>
+                        </Button>
                         <Grid container justify="flex-end">
                             <Grid item>
-                                <Link onClick={() => props.history.replace("/sportsman-login")} variant="body2" className={classes.link}>
+                                {/* Link login page (if the user already has an account) */}
+                                <Link onClick={() => props.history.replace("/login")} variant="body2" className={classes.link}>
                                     Already have an account? Sign in
-                        </Link>
+                                </Link>
                             </Grid>
                         </Grid>
                     </form>
@@ -233,81 +235,75 @@ function SignUpPage(props) {
     );
 }
 
-// BUG
-//function for writing user-information into the database
+// function for adding the user personal details into db (for new users)
 function putUserDataToDB(props) {
-    console.log("putUserDataToDB has started")
     const uid = firebase.getCurrentUserId()
-    console.log("uid: "+uid)
-    // getUserData().then((geo) => {
-        
-        // let geolocation = {
-        //     country: geo.country,
-        //     countryCode: geo.countryCode,
-        //     regionName: geo.regionName,
-        //     city: geo.city,
-        //     zip: geo.zip,
-        //     lat: geo.lat,
-        //     lon: geo.lon,
-        //     timezone: geo.timezone,
-        //     org: geo.org,
-        //     ip: geo.query
-        // }
-        
-        //writing into realtime database
-        firebase.firedDB.collection("users").doc(uid).set({
-            name: props.name,
-            surname: props.surname,
-            role: props.isCoach ? "COACH" : "SPORTSMAN",
-            email: props.email,
-            mobile_num: props.mobile_num ? props.mobile_num : null,
-            discipline: props.discipline ? props.discipline : null,
-            photoURL: null
-    
-        });
-        firebase.firedDB.collection("users").doc(uid).collection("private").doc("preferences").set({
-            appTheme: "light"
-        })
-        // firebase.firedDB.collection("users").doc(uid).collection("private").doc("geolocation").set(geolocation)
-    // })
+
+    // adding user's details into db
+    firebase.firedDB.collection("users").doc(uid).set({
+        name: props.name,
+        surname: props.surname,
+        role: props.isCoach ? "COACH" : "SPORTSMAN",
+        email: props.email,
+        mobile_num: props.mobile_num ? props.mobile_num : null,
+        discipline: props.discipline ? props.discipline : null,
+        photoURL: null
+
+    });
+
+    // initialising the user's app theme in database
+    firebase.firedDB.collection("users").doc(uid).collection("private").doc("preferences").set({
+        appTheme: "light"
+    })
+
 
 }
 
-//get the geolocation json data from the api
-// async function getUserData() {
-//     let response = await fetch("http://ip-api.com/json/")
-//     const json = await response.json()
-//     return json
-// }
 
 //async register function
 async function onRegister(e, history, name, surname, email, password, isCoach) {
     e.preventDefault()
-    
+
     try {
         await firebase.register(name, surname, email, password)
-        
+
         //set the session storage property Auth to true
         sessionStorage.setItem("Auth", true)
         alert("You have successfully registered! Congrats!")
-        
+
 
         //redirect to login forms
-        if (!isCoach){
+        if (!isCoach) {
             history.replace("/sportsman-login")
-        }else{
+        } else {
             history.replace("/coach-login")
         }
-        
+
 
         //Write to database
+        putUserDataToDB({ name: name, surname: surname, email: email, isCoach: isCoach })
         
-        putUserDataToDB({name: name, surname: surname, email: email, isCoach: isCoach})
     } catch (error) {
         //display an error
         console.log(error.message)
     }
 }
+
+//async function for logging in 
+async function login(email, password) {
+  
+    try {
+      //login 
+      await firebase.login(email, password)
+      await console.log("Successfull login")
+  
+      //set sessionStorage property Auth
+      sessionStorage.setItem("Auth", true)
+  
+    } catch (error) {
+      alert(error.message)
+    }
+  }
 
 
 export default withRouter(SignUpPage);
