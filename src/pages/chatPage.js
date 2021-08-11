@@ -5,7 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 
 // Import the chat component
-import ChatComponent from "./chatApp"
+import ChatComponent from "../components/chat/chatApp"
 
 
 //styles

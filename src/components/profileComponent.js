@@ -1,15 +1,17 @@
-//<-----------------------page for the user's profile----------------------->//
+//page for the coach's profile
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
-import { Container, Avatar, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
+import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
-import firebase from '../../firebase/firebase';
+import firebase from '../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
+import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-import UploadDialog from "../coachApp/uploadDialog"
+
+import UploadDialog from "./uploadDialog"
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -46,14 +48,14 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-
-
-
-function SportsmanProfile(props) {
-  const classes = useStyles();
-
+function ProfileComponent(props) {
   //state for the dialog (avatar upload)
   const [fileDialogOpen, setFileDialogOpen] = useState(false)
+  //state for appTheme
+  const [darkTheme, setDarkTheme] = useState(props.theme.colorMode==="dark" ? true : false)
+
+  const classes = useStyles();
+  //console.log(props.user.photoURL)
 
   //function for handling the opening of a avatar upload dialog
   function handleAvatarUpload() {
@@ -61,44 +63,42 @@ function SportsmanProfile(props) {
     setFileDialogOpen(true)
   }
 
-  //function which changes the app theme in setting sub section in profile
+  //function for changing the app theme
   function handleThemeChange(e){
-    console.log()
+    setDarkTheme(e.target.checked)
     if(e.target.checked){
       //set dark theme
-      firebase.updateUserPreferences({appTheme: "dark"})
-      //props.setTheme("dark")
+      props.setTheme("dark")
     }else{
       //set light theme
-      //props.setTheme("light")
-      firebase.updateUserPreferences({appTheme: "light"})
-
+      props.setTheme("light")
     }
   }
+
+  console.log(props.theme)
+
 
   return (
     <React.Fragment>
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
-        <h1>Sportsman Profile</h1>
+        <h1>{props.userRole == "coach" ? "Coach " : "Sportsman "}Profile</h1>
         <Avatar alt="avatar" src={props.user.photoURL} style={{ width: 200, height: 200 }} onClick={handleAvatarUpload} />
         <Suspense fallback={null}>
           <h3>{props.user.displayName}</h3>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
-
         <h2>Settings</h2>
         <FormControlLabel
           control={
             <Switch
-              checked={props.theme.colorMode == "dark"}
+              checked={darkTheme}
               onChange={handleThemeChange}
               name="checkedB"
               color="primary"
             />
           }
-          label={props.theme.colorMode == "dark" ? "Light theme" : "Dark theme"}
+          label={darkTheme ? "Light theme" : "Dark theme"}
         />
-
       </Container>
 
 
@@ -117,8 +117,9 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
   return {
-    setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj })
+    setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj }),
+    setTheme: (theme) => dispatch({ type: "THEME/CHANGE", payload: theme }),
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(SportsmanProfile));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(ProfileComponent));

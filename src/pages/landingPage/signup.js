@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Container, Typography, Switch, FormControlLabel, FormControl, InputLabel, Select, Avatar, Button, CssBaseline, TextField, Checkbox, Link, Grid } from '@material-ui/core'
 import { withRouter } from "react-router-dom"
 import { makeStyles } from '@material-ui/core/styles';
@@ -8,6 +8,8 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 
 // Importing firebase object to connect to backend
 import firebase from '../../firebase/firebase'
+
+import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
 
 // declaring styles
 const useStyles = makeStyles((theme) => ({
@@ -47,6 +49,45 @@ function SignUpPage(props) {
     const [isCoach, setIsCoach] = useState(false)
     const [discipline, setDiscipline] = useState("")
 
+    const [
+        createUserWithEmailAndPassword,
+        user,
+        loading,
+        error,
+    ] = useCreateUserWithEmailAndPassword(firebase.auth);
+
+
+    // useEffect(() => {
+
+    //     console.log(user)
+
+    //     if (user) {
+
+    //         //update user's auth profile
+    //         firebase.auth.currentUser.updateProfile({
+    //             displayName: firstName + " " + lastName,
+    //             userEmail: email
+    //         })
+
+    //         //adding the coach role to custom claims if the user signed up for the coach account
+    //         if (isCoach && email !== "admin@admin.com") {
+    //             firebase.addCoachRole(email).then(res => console.log(res))
+    //         } else if (!isCoach) {
+    //             firebase.addSportsmanRole(email).then(res => console.log(res))
+    //         } else if (email == "admin@admin.com" && !isCoach) {
+    //             firebase.addAdminRole(email).then(res => console.log(res))
+    //         }
+
+    //         //set the session storage property Auth to true
+    //         sessionStorage.setItem("Auth", true)
+    //         alert("You have successfully registered! Congrats!")
+
+    //         //Write to database
+    //         putUserDataToDB({ name: firstName, surname: lastName, email: email, isCoach: isCoach })
+    //     }
+
+    // }, [user])
+
     console.log("isCoach = " + isCoach)
 
     //function for clearing all the states after switching between coach signup and sportsman signup
@@ -65,9 +106,14 @@ function SignUpPage(props) {
     }
 
     function handleRegisterBtn_Click(e) {
+        e.preventDefault()
         //check if the user is signed out
         if (!firebase.getCurrentUserId()) {
             //register new user
+
+            // createUserWithEmailAndPassword(email, password)
+
+
             onRegister(e, props.history, firstName, lastName, email, password, isCoach).then(() => {
 
                 //log the user out after the registration
@@ -271,18 +317,14 @@ async function onRegister(e, history, name, surname, email, password, isCoach) {
         sessionStorage.setItem("Auth", true)
         alert("You have successfully registered! Congrats!")
 
-
         //redirect to login forms
-        if (!isCoach) {
-            history.replace("/sportsman-login")
-        } else {
-            history.replace("/coach-login")
-        }
+        history.replace("/login")
+
 
 
         //Write to database
         putUserDataToDB({ name: name, surname: surname, email: email, isCoach: isCoach })
-        
+
     } catch (error) {
         //display an error
         console.log(error.message)
@@ -291,19 +333,19 @@ async function onRegister(e, history, name, surname, email, password, isCoach) {
 
 //async function for logging in 
 async function login(email, password) {
-  
+
     try {
-      //login 
-      await firebase.login(email, password)
-      await console.log("Successfull login")
-  
-      //set sessionStorage property Auth
-      sessionStorage.setItem("Auth", true)
-  
+        //login 
+        await firebase.login(email, password)
+        await console.log("Successfull login")
+
+        //set sessionStorage property Auth
+        sessionStorage.setItem("Auth", true)
+
     } catch (error) {
-      alert(error.message)
+        alert(error.message)
     }
-  }
+}
 
 
 export default withRouter(SignUpPage);

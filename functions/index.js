@@ -266,29 +266,53 @@ exports.addChatTrigger = functions.firestore
         // perform desired operations ...
     });
 
+exports.doesChatExist = functions.https.onCall((data, context) => {
+    return new Promise((resolve, reject) => {
+
+        admin.firestore().collection('chat-groups').where("memberIDs", "array-contains", context.auth.uid)
+            .get()
+            .then(snapshot => {
+                let res = false
+                snapshot.forEach(doc => {
+                    const ids = doc.get("memberIDs")
+                    if (ids[0] === data.memberId || ids[1] === data.memberId) {
+                        res = true
+                    }
+                })
+                resolve(res)
+
+            })
+            .catch(reason => {
+                console.log('db.collection("users").get gets err, reason: ' + reason);
+                reject(reason);
+            });
+    });
+})
+
 exports.getUserByEmail = functions.https.onCall((data, context) => {
 
     return new Promise((resolve, reject) => {
         var db = admin.firestore();
         db.collection('users').where("email", "==", data.email)
-          .get()
-          .then(snapshot => {
-              let res = []
-              snapshot.forEach((snap) => {
-                let user = {...snap.data(), uid: snap.id}
-                functions.logger.info(user, { structuredData: true });
-                res.push(user)
-              })
-              resolve(res[0]);
-          })
-          .catch(reason => {
-              console.log('db.collection("colors").get gets err, reason: ' + reason);
-              reject(reason);
-          });
+            .get()
+            .then(snapshot => {
+                let res = []
+                snapshot.forEach((snap) => {
+                    let user = { ...snap.data(), uid: snap.id }
+                    functions.logger.info(user, { structuredData: true });
+                    res.push(user)
+                })
+                resolve(res[0]);
+            })
+            .catch(reason => {
+                console.log('db.collection("users").get gets err, reason: ' + reason);
+                reject(reason);
+            });
     });
 
 });
 
+// triggered when the user updayes his profile
 exports.updateUserProfileTrigger = functions.firestore
     .document('users/{userId}')
     .onUpdate((change, context) => {
@@ -297,5 +321,32 @@ exports.updateUserProfileTrigger = functions.firestore
         if (change.after.get("photoURL") !== change.before.get("photoURL")) {
             //the user has updated his profile photo
             functions.logger.info("The user " + context.params.userId + " has updated his profile avatar!");
+
+            //change the profile photo in the db for chats
+            admin.firestore().collection("chat-groups").where("memberIDs", "array-contains", context.params.userId).get()
+                .then(snapshot => {
+                    snapshot.forEach(doc => {
+                        let membersInfo = doc.data().membersInfo
+
+
+                        membersInfo.forEach(info => {
+                            if (info.uid === context.params.userId) {
+                                info.photoURL = change.after.get("photoURL")
+                            }
+                        })
+
+                        doc.ref.update({
+                            membersInfo: membersInfo
+                        })
+                    })
+                }).catch(err => functions.logger.error(err))
+
+            // updating the training-groups records
+            admin.firestore().collection("training-groups").where("members", "array-contains", context.params.userId).get()
+                .then(snapshot => {
+                    snapshot.forEach(doc => {
+                        doc.ref.collection("members").doc(context.params.userId).update({ photoURL: change.after.get("photoURL") })
+                    })
+                }).catch(err => functions.logger.error(err))
         }
     });

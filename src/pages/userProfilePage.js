@@ -1,13 +1,12 @@
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
-import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
-import firebase from '../../firebase/firebase';
+import firebase from '../firebase/firebase';
 import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 
-import ProfilePage from "./profile"
+import ProfileComponent from "../components/profileComponent"
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -47,7 +46,7 @@ const useStyles = makeStyles((theme) => ({
 
 
 //sportsman app home page
-function SportsmanApp(props) {
+function UserProfilePage(props) {
   const { userId } = useParams();
   const classes = useStyles();
 
@@ -63,12 +62,14 @@ function SportsmanApp(props) {
     <React.Fragment>
 
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
-        <h1>Sportsman App</h1>
+        <h1>{props.heading ? props.heading : (props.userRole === "coach" ? "Coach App" : "Sportsman App")}</h1>
         <Suspense>
           <h2>Welcome {props.user.displayName}!</h2>
           <h4>Email: "{props.user.email}"</h4>
         </Suspense>
-        <ProfilePage/>
+
+        <ProfileComponent userRole={props.userRole}/>
+
         <button onClick={()=>{
           firebase.logout()
           props.history.replace("/")
@@ -94,4 +95,4 @@ const mapDispatchToProps = dispatch => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(SportsmanApp));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(UserProfilePage));

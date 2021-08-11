@@ -3,7 +3,7 @@ import { Paper, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, Dialog
 import { connect } from "react-redux"
 import firebase from '../../firebase/firebase';
 import Message from "./message"
-
+import { useCollection } from 'react-firebase-hooks/firestore';
 
 function Chat(props) {
     const [allMessages, setAllMessages] = useState([])

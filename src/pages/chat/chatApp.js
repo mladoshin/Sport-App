@@ -1,23 +1,16 @@
 //<-----------------------CHAT COMPONENT FOR CHAT PAGE----------------------->//
 import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
-import { Container, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
-//import NavBar from "../../components/navigation/navbar"
-import { withRouter, useParams } from "react-router-dom";
-import firebase from '../../firebase/firebase';
-//import AddIcon from '@material-ui/icons/Add';
+import { List, ListItem, Paper, Button, Avatar } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles';
 
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
+// importing required components
 import GroupChatItem from "./groupChatItem"
-
 import Chat from "./chat"
 import ChatItem from "./chatItem"
 
-import Paper from '@material-ui/core/Paper';
+// link to db custom methods
+import firebase from '../../firebase/firebase';
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -120,16 +113,18 @@ function ChatComponent(props) {
         return res
     }
 
+    // function for adding a new personal chat
     function handleAddPersonalChat(member){
         console.log("Selected user: ")
         console.log(member)
         let chatExists = DoesChatExist(member.id)
         if (chatExists) {
+            // if the chat already exists, then alert the error
             alert("Chat with this user already exists!")
             return
         }
 
-        //let memberId = window.prompt("Enetr memberId: ")
+        // if the person exists, then create a new chat in the db
         if (member) {
             let user = {
                 name: props.user.displayName.split(" ")[0],
@@ -139,6 +134,7 @@ function ChatComponent(props) {
                 role: props.user.claims.role
             }
             firebase.getUserInfoById(member.id).then(member => {
+                // adding a new chat to db here
                 firebase.addNewChat([member, user])
             })
 
@@ -162,7 +158,7 @@ function ChatComponent(props) {
     }
 
 
-    //render list of users to text
+    // list of users with avatar and name
     const usersGrid = (
         <List>
 
@@ -183,6 +179,7 @@ function ChatComponent(props) {
         </List>
     )
 
+    // list of chats component
     const chatsGrid = (
         <List>
 
@@ -254,11 +251,7 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
     return {
         setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj }),
-        setTheme: (theme) => dispatch({ type: "THEME/CHANGE", payload: theme }),
-        //loadGoals: (arr) => dispatch({ type: "GOALS/LOAD", payload: arr }),
-        //loadCategories: (arr) => dispatch({ type: "GOALS/CATEGORY/LOAD", payload: arr }),
-        //loadAvatar: (url) => dispatch({ type: "AVATAR/LOAD", payload: url }),
-        //loadNotifications: (arr)=>dispatch({type: "NOTIFICATION/LOAD", payload: arr})
+        setTheme: (theme) => dispatch({ type: "THEME/CHANGE", payload: theme })
     }
 }
 
