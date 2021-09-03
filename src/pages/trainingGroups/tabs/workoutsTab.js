@@ -37,7 +37,6 @@ function TrainingPlanDialog(props) {
     const [info, setInfo] = useState(null)
     const classes = useStyles()
 
-    console.log(info)
 
     useEffect(() => {
         console.log(props.open.payload)

@@ -47,22 +47,13 @@ const useStyles = makeStyles((theme) => ({
 
 //sportsman app home page
 function UserProfilePage(props) {
-  const { userId } = useParams();
   const classes = useStyles();
-
-  function authCheck(urlId, userId) {
-    console.log(urlId, userId)
-    if (urlId !== userId) {
-      return false
-    }
-    return true
-  }
 
   return (
     <React.Fragment>
 
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
-        <h1>{props.heading ? props.heading : (props.userRole === "coach" ? "Coach App" : "Sportsman App")}</h1>
+        {/* <h1>{props.heading ? props.heading : (props.userRole === "coach" ? "Coach App" : "Sportsman App")}</h1> */}
         <Suspense>
           <h2>Welcome {props.user.displayName}!</h2>
           <h4>Email: "{props.user.email}"</h4>

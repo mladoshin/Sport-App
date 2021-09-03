@@ -134,20 +134,29 @@ function App(props) {
           <Route exact path="/login" render={() => <Navbar><SignInPage /></Navbar>} />
           <Route exact path="/signup" render={() => <Navbar><SignUpPage /></Navbar>} />
 
-          {/* SPORTSMAN APP ROUTES*/}
-          <Route exact path="/sportsmanApp/userId=:userId" render={() => <Navbar><UserProfilePage userRole="sportsman" /></Navbar>} />
-          {/* <Route exact path="/sportsmanApp/userId=:userId/profile" render={() => <Navbar><SportsmanProfile /></Navbar>} /> */}
-          <Route exact path="/sportsmanApp/userId=:userId/training-groups" render={() => <Navbar><TrainingGroupsPage type="SPORTSMAN" /></Navbar>} />
+          {/* App routes */}
+          <Route exact path="/home" render={() => <Navbar><UserProfilePage/></Navbar>} />
+          <Route exact path="/training-groups" render={() => <Navbar><TrainingGroupsPage/></Navbar>} />
+          <Route exact path="/training-groups/groupId=:groupId" render={() => <Navbar><TrainingGroupPage /></Navbar>} />
+          <Route exact path="/chats" render={() => <Navbar><ChatPage /></Navbar>} />
+          <Route exact path="/calendar" render={() => <Navbar><CalendarPage /></Navbar>} />
+          <Route exact path="/viewProfile/uid=:uid" render={() => <Navbar><ProfilePage /></Navbar>} />
+
+          {/* ADMIN APP ROUTES*/}
+          <Route exact path="/adminApp" render={() => <Navbar><AdminApp /></Navbar>} />
+          <Route exact path="/adminApp/profile" render={() => <Navbar><AdminProfile /></Navbar>} />
+          <Route exact path="/adminApp/diary" render={() => <Navbar><WorkoutDiary /></Navbar>} />
+
+          {/* <Route exact path="/sportsmanApp/userId=:userId/training-groups" render={() => <Navbar><TrainingGroupsPage type="SPORTSMAN" /></Navbar>} />
           <Route exact path="/sportsmanApp/userId=:userId/training-groups/groupId=:groupId" render={() => <Navbar><TrainingGroupPage type="SPORTSMAN" /></Navbar>} />
           <Route exact path="/sportsmanApp/userId=:userId/chats" render={() => <Navbar><ChatPage /></Navbar>} />
           <Route exact path="/sportsmanApp/userId=:userId/calendar" render={() => <Navbar><CalendarPage /></Navbar>} />
           <Route exact path="/sportsmanApp/userId=:userId/notes" render={() => <Navbar><NotesPage /></Navbar>} />
           <Route exact path="/sportsmanApp/userId=:userId/workouts" render={() => <Navbar><WorkoutsPage /></Navbar>} />
           <Route exact path="/viewProfile/uid=:uid" render={() => <Navbar><ProfilePage /></Navbar>} />
+          <Route exact path="/sportsmanApp/dashboard" render={() => <Navbar><DashboardPage /></Navbar>} />
 
-          {/* COACH APP ROUTES*/}
           <Route exact path="/coachApp/coachId=:coachId" render={() => <Navbar><UserProfilePage userRole="coach" /></Navbar>} />
-          {/* <Route exact path="/coachApp/coachId=:coachId/profile" render={() => <Navbar><CoachProfile /></Navbar>} /> */}
           <Route exact path="/coachApp/coachId=:coachId/dashboard" render={() => <Navbar><DashboardPage /></Navbar>} />
           <Route exact path="/coachApp/coachId=:coachId/workouts" render={() => <Navbar><WorkoutsPage /></Navbar>} />
           <Route exact path="/coachApp/coachId=:coachId/notes" render={() => <Navbar><NotesPage /></Navbar>} />
@@ -155,12 +164,7 @@ function App(props) {
           <Route exact path="/coachApp/coachId=:coachId/training-groups" render={() => <Navbar><TrainingGroupsPage type="COACH" /></Navbar>} />
           <Route exact path="/coachApp/coachId=:coachId/training-groups/groupId=:groupId" render={() => <Navbar><TrainingGroupPage type="COACH" /></Navbar>} />
           <Route exact path="/coachApp/coachId=:coachId/chats" render={() => <Navbar><ChatPage /></Navbar>} />
-          <Route exact path="/coachApp/coachId=:coachId/workout-plans/planId=:planId" render={() => <Navbar><WorkoutPlanPage /></Navbar>} />
-
-          {/* ADMIN APP ROUTES*/}
-          <Route exact path="/adminApp" render={() => <Navbar><AdminApp /></Navbar>} />
-          <Route exact path="/adminApp/profile" render={() => <Navbar><AdminProfile /></Navbar>} />
-          <Route exact path="/adminApp/diary" render={() => <Navbar><WorkoutDiary /></Navbar>} />
+          <Route exact path="/coachApp/coachId=:coachId/workout-plans/planId=:planId" render={() => <Navbar><WorkoutPlanPage /></Navbar>} /> */}
 
           <Route render={() => <Navbar><ErrorPage /></Navbar>} />
 

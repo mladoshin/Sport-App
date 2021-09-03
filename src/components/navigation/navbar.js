@@ -3,6 +3,10 @@ import { connect } from 'react-redux'
 import { withRouter } from "react-router-dom";
 import { useTheme } from '@material-ui/core/styles';
 
+import HomeRoundedIcon from '@material-ui/icons/HomeRounded';
+import ChatBubbleRoundedIcon from '@material-ui/icons/ChatBubbleRounded';
+import GroupRoundedIcon from '@material-ui/icons/GroupRounded';
+import CalendarTodayRoundedIcon from '@material-ui/icons/CalendarTodayRounded';
 
 // Import a navbar for mobile devices
 import MobileNavbar from "./mobile/mobileNavbar"
@@ -11,14 +15,11 @@ import MobileNavbar from "./mobile/mobileNavbar"
 import DesktopNavbar from "./desktop/desktopNavbar"
 
 //menu items for coach app
-const coachMenu = [
-  {title: "Home", path: ""},
-  {title: "Dashboard", path: "/dashboard"},
-  {title: "Messages", path: "/chats"},
-  {title: "Training Groups", path: "/training-groups"},
-  {title: "Workout builder", path: "/workouts"},
-  {title: "Notes", path: "/notes"},
-  {title: "Calendar", path: "/calendar"}
+const userMenu = [
+  {title: "Home", path: "/home", icon: HomeRoundedIcon},
+  {title: "Messages", path: "/chats", icon: ChatBubbleRoundedIcon},
+  {title: "Training Groups", path: "/training-groups", icon: GroupRoundedIcon},
+  {title: "Calendar", path: "/calendar", icon: CalendarTodayRoundedIcon}
 ]
 
 //menu items for admin app
@@ -32,16 +33,10 @@ const adminMenu = [
 //menu items for sportsman app
 const sportsmanMenu = [
   {title: "Home", path: ""},
-  {title: "Dashboard", path: "/dashboard"},
   {title: "Messages", path: "/chats"},
-  {title: "Workouts", path: "/workouts"},
   {title: "Training groups", path: "/training-groups"},
-  {title: "Diary", path: "/diary"},
-  {title: "Goals", path: "/goals"},
-  {title: "ToDos", path: "/todos"},
   {title: "Calendar", path: "/calendar"},
-  {title: "Notes", path: "/notes"},
-  {title: "Workout builder", path: "/workouts"},
+
 ]
 
 const homeMenuItems = [
@@ -58,19 +53,13 @@ function NavBar(props) {
 
   //setting the menu items according to the user's role
   useEffect(()=>{
-    if(props.user.claims){
-      if(props.user.claims.role == "ADMIN"){
-        setMenuItems(adminMenu)
-      }else if(props.user.claims.role == "COACH"){
-        setMenuItems(coachMenu)
-      }else if(props.user.claims.role == "SPORTSMAN"){
-        setMenuItems(sportsmanMenu)
-      }
+    if(props.user){
+      setMenuItems(userMenu)
     }else{
       setMenuItems(homeMenuItems)
     }
     
-  }, [props.user.claims])
+  }, [props.user])
 
 
   // if the device is mobile, then render a mobile navbar, else render a desktop version of a navbar

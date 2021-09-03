@@ -74,6 +74,97 @@ exports.getUserGeolocation = functions.https.onCall((data, context) => {
     })
 })
 
+function getUsersDataByIds(userIds){
+    let promises = []
+    userIds.forEach(id => {
+        const promise = new Promise((resolve, reject) => {
+            admin.firestore().collection("users").doc(id).get().then(snapshot => {
+                const data = snapshot.data()
+                data.uid = snapshot.id
+                resolve(data)
+            }).catch(err => reject(err))
+        })
+        promises.push(promise)
+    })
+
+    return Promise.all(promises)
+}
+
+function prepareMembersData(data, ownerId, groupId){
+    data.forEach(member => {
+        let role = "member"
+        if(member.uid === ownerId){
+            role = "owner"
+        }
+
+        const memberData = {
+            name: member.name,
+            surname: member.surname,
+            photoURL: member.photoURL,
+            role: role
+        }
+
+        //add the member to the subcollection
+        admin.firestore().collection("training-groups").doc(groupId).collection("members").doc(member.uid).set(memberData)
+    })
+}
+
+exports.createTrainingGroup = functions.https.onCall((data, context) => {
+    const ownerId = context.auth.uid
+    const memberIds = data.memberIds
+
+    functions.logger.log(memberIds)
+
+    const groupData = {
+        name: data.groupName,
+        owner: ownerId,
+        isPrivate: data.isPrivate,
+        dateCreated: admin.firestore.FieldValue.serverTimestamp(),
+        members: [...memberIds, ownerId]
+    }
+
+    admin.firestore().collection("training-groups").add(groupData).then(ref => {
+        const groupId = ref.id
+        getUsersDataByIds([...memberIds, ownerId]).then(res => {
+            prepareMembersData(res, ownerId, groupId)
+        })
+    })
+})
+
+exports.addMembersToTrainingGroup = functions.https.onCall((data, context) => {
+    const groupId = data.groupId
+    const ownerId = context.auth.uid
+    const memberIds = data.memberIds
+
+    functions.logger.log(memberIds)
+
+    memberIds.forEach(id => {
+        admin.firestore().collection("training-groups").doc(groupId).update({
+            members: admin.firestore.FieldValue.arrayUnion(id)
+        })
+    })
+    
+
+    getUsersDataByIds(memberIds).then(res => {
+        prepareMembersData(res, ownerId, groupId)
+    })
+})
+
+exports.removeMembersFromTrainingGroup = functions.https.onCall((data, context) => {
+    const groupId = data.groupId
+    const memberIds = data.memberIds
+
+    memberIds.forEach(id => {
+        admin.firestore().collection("training-groups").doc(groupId).update({
+            members: admin.firestore.FieldValue.arrayRemove(id)
+        })
+
+        admin.firestore().collection("training-groups").doc(groupId).collection("members").doc(id).delete()
+    })
+    
+})
+
+
 exports.getAllUsers = functions.https.onCall((data, context) => {
     return admin
         .database()
@@ -96,132 +187,73 @@ exports.getAllUsers = functions.https.onCall((data, context) => {
         })
 })
 
-//callable function for coaches (adding new training group)
-
-//trigger for new training groups
-exports.addTrainingGroupTrigger = functions.firestore
-    .document('training-groups/{groupId}')
-    .onCreate((snap, context) => {
-        // Get an object representing the document
-        // e.g. {'name': 'Marie', 'age': 66}
-        const newGroup = snap.data()
-        functions.logger.info("New Training group has been created!");
-
-        const owner = snap.get("owner")
-        const members = snap.get("members")
-        const groupShortcut = {
-            name: snap.get("name"),
-            isPrivate: snap.get("isPrivate"),
-            dateCreated: snap.get("dateCreated"),
-            members: members,
-            owner: owner
-        }
-        functions.logger.info(groupShortcut, { structuredData: true });
-
-        //fireDB.collection("users").doc(owner).collection("training-groups").doc(snap.id)
-        //    .set(groupShortcut)
-        //    .catch(err => functions.logger.info(err, { structuredData: true }))
-
-
-        members.forEach((memberId) => {
-            fireDB.collection("users").doc(memberId).collection("training-groups").doc(snap.id)
-                .set(groupShortcut)
-                .catch(err => functions.logger.info(err, { structuredData: true }))
-        })
-        // perform desired operations ...
-    });
-
-//trigger for deleted training groups
-exports.deleteTrainingGroupTrigger = functions.firestore
-    .document('training-groups/{groupId}')
-    .onDelete((snap, context) => {
-        // Get an object representing the document
-        // e.g. {'name': 'Marie', 'age': 66}
-        const owner = snap.get("owner")
-        const members = snap.get("members")
-
-
-        fireDB.collection("users").doc(owner).collection("training-groups").doc(snap.id)
-            .delete()
-            .catch(err => functions.logger.info(err, { structuredData: true }))
-
-
-        members.forEach((memberId) => {
-            fireDB.collection("users").doc(memberId).collection("training-groups").doc(snap.id)
-                .delete()
-                .catch(err => functions.logger.info(err, { structuredData: true }))
-        })
-
-        // perform desired operations ...
-    });
-
 //trigger for updated training groups
-exports.updateTrainingGroupTrigger = functions.firestore
-    .document('training-groups/{groupId}')
-    .onUpdate((change, context) => {
-        // Get an object representing the document
-        // e.g. {'name': 'Marie', 'age': 66}
-        const newValue = change.after.data()
-        const oldValue = change.before.data()
-        const owner = newValue.owner
-        const membersAfter = newValue.members
-        const membersBefore = oldValue.members
-        const groupId = context.params.groupId
+// exports.updateTrainingGroupTrigger = functions.firestore
+//     .document('training-groups/{groupId}')
+//     .onUpdate((change, context) => {
+//         // Get an object representing the document
+//         // e.g. {'name': 'Marie', 'age': 66}
+//         const newValue = change.after.data()
+//         const oldValue = change.before.data()
+//         const owner = newValue.owner
+//         const membersAfter = newValue.members
+//         const membersBefore = oldValue.members
+//         const groupId = context.params.groupId
 
-        const groupShortcut = {
-            name: newValue.name,
-            isPrivate: newValue.isPrivate,
-            dateCreated: newValue.dateCreated,
-            members: membersAfter,
-            owner: owner
-        }
+//         const groupShortcut = {
+//             name: newValue.name,
+//             isPrivate: newValue.isPrivate,
+//             dateCreated: newValue.dateCreated,
+//             members: membersAfter,
+//             owner: owner
+//         }
 
-        functions.logger.info(groupId, { structuredData: true });
-        functions.logger.info(owner, { structuredData: true });
+//         functions.logger.info(groupId, { structuredData: true });
+//         functions.logger.info(owner, { structuredData: true });
 
-        fireDB.collection("users").doc(owner).collection("training-groups").doc(groupId).update(groupShortcut)
+//         fireDB.collection("users").doc(owner).collection("training-groups").doc(groupId).update(groupShortcut)
 
-        membersAfter.forEach((memberId) => {
-            fireDB.collection("users").doc(memberId).collection("training-groups").doc(groupId).update(groupShortcut)
-        })
+//         membersAfter.forEach((memberId) => {
+//             fireDB.collection("users").doc(memberId).collection("training-groups").doc(groupId).update(groupShortcut)
+//         })
 
 
-        functions.logger.info("Training group has been updated!");
-        functions.logger.info(newValue, { structuredData: true });
-        functions.logger.info(oldValue, { structuredData: true });
+//         functions.logger.info("Training group has been updated!");
+//         functions.logger.info(newValue, { structuredData: true });
+//         functions.logger.info(oldValue, { structuredData: true });
 
-        // perform desired operations ...
-    });
+//         // perform desired operations ...
+//     });
 
 function getGroupMembers(groupId) {
     return fireDB.collection("tarining-groups").doc(groupId).get().then(res => { return res.get("members") })
 }
 
-exports.addNewMemberToTrainingGroup = functions.firestore
-    .document('training-groups/{groupId}/members/{memberId}')
-    .onCreate((snap, context) => {
-        // Get an object representing the document
-        // e.g. {'name': 'Marie', 'age': 66}
-        const memberId = context.params.memberId
-        const groupId = context.params.groupId
-        functions.logger.info("New member has been added to training group!");
+// exports.addNewMemberToTrainingGroup = functions.firestore
+//     .document('training-groups/{groupId}/members/{memberId}')
+//     .onCreate((snap, context) => {
+//         // Get an object representing the document
+//         // e.g. {'name': 'Marie', 'age': 66}
+//         const memberId = context.params.memberId
+//         const groupId = context.params.groupId
+//         functions.logger.info("New member has been added to training group!");
 
-        fireDB.collection("training-groups").doc(groupId).update({ members: admin.firestore.FieldValue.arrayUnion(memberId) })
+//         fireDB.collection("training-groups").doc(groupId).update({ members: admin.firestore.FieldValue.arrayUnion(memberId) })
 
-    });
+//     });
 
-exports.removeMemberFromTrainingGroup = functions.firestore
-    .document('training-groups/{groupId}/members/{memberId}')
-    .onDelete((snap, context) => {
-        // Get an object representing the document
-        // e.g. {'name': 'Marie', 'age': 66}
-        const memberId = context.params.memberId
-        const groupId = context.params.groupId
-        functions.logger.info("New member has been added to training group!");
+// exports.removeMemberFromTrainingGroup = functions.firestore
+//     .document('training-groups/{groupId}/members/{memberId}')
+//     .onDelete((snap, context) => {
+//         // Get an object representing the document
+//         // e.g. {'name': 'Marie', 'age': 66}
+//         const memberId = context.params.memberId
+//         const groupId = context.params.groupId
+//         functions.logger.info("New member has been added to training group!");
 
-        fireDB.collection("training-groups").doc(groupId).update({ members: admin.firestore.FieldValue.arrayRemove(memberId) })
+//         fireDB.collection("training-groups").doc(groupId).update({ members: admin.firestore.FieldValue.arrayRemove(memberId) })
 
-    });
+//     });
 
 exports.addChatTrigger = functions.firestore
     .document('chat-groups/{chatId}')

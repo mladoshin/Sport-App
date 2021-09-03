@@ -8,40 +8,42 @@ function isUserInGroup(uid, groupMembers){
     let res = groupMembers.indexOf(uid)
     return res > -1 ? true : false
 }
-function ActionButton(props){
+
+function ActionButton({group, isOwner, user}){
 
     function subscribeToTrainingGroup(){
         let member = {
-            id: props.user.uid,
-            name: props.user.displayName.split(" ")[0],
-            surname: props.user.displayName.split(" ")[1],
-            photoURL: props.user.photoURL,
+            id: user.uid,
+            name: user.displayName.split(" ")[0],
+            surname: user.displayName.split(" ")[1],
+            photoURL: user.photoURL,
             dateJoined: Date.now(),
             role: "SPORTSMAN"
         }
 
-        firebase.addMembersToTrainingGroup(props.group.groupId, [member])
+        firebase.addMembersToTrainingGroup(group.groupId, [member])
     }
 
     function handleApplyToTrainingGroup(){
         let text = window.prompt("Enter application text: ")
         let applicant = {
-            name: props.user.displayName.split(" ")[0],
-            surname: props.user.displayName.split(" ")[1],
-            photoURL: props.user.photoURL,
+            name: user.displayName.split(" ")[0],
+            surname: user.displayName.split(" ")[1],
+            photoURL: user.photoURL,
             applicationDate: Date.now(),
             message: text
         }
-        firebase.applyToTrainingGroup(props.group.groupId, props.user.uid, applicant)
+        firebase.applyToTrainingGroup(group.groupId, user.uid, applicant)
     }
 
     function unsubscribeFromTrainingGroup(){
-        let memberId = props.user.uid
-        firebase.removeMemberFromTrainingGroup(props.group.groupId, [memberId])
+        let memberId = user.uid
+        firebase.removeMemberFromTrainingGroup(group.groupId, [memberId])
     }
 
-    if(props.user.claims.role==="SPORTSMAN" && !isUserInGroup(props.user.uid, props.group.members)){
-        if(props.group.isPrivate){
+
+    if(!isUserInGroup(user.uid, group.members)){
+        if(group.isPrivate){
             return(
                 <Button style={{backgroundColor: "green"}} onClick={handleApplyToTrainingGroup}>Apply</Button>
             )
@@ -51,9 +53,13 @@ function ActionButton(props){
             )
         }
         
-    }else if(props.user.claims.role==="SPORTSMAN" && isUserInGroup(props.user.uid, props.group.members)){
+    }else if(isUserInGroup(user.uid, group.members) && !isOwner){
         return(
             <Button color="secondary" onClick={unsubscribeFromTrainingGroup}>Unsubscribe</Button>
+        )
+    }else if(isOwner){
+        return(
+            <i>It is your group</i>
         )
     }else{
         return null
@@ -64,14 +70,23 @@ function GroupGrid(props) {
     console.log(props.user)
 
     function handleOpenGroup(groupId){
-        if(props.user.claims.role == "COACH"){
-            props.goToPage("/coachApp/coachId="+props.user.uid+"/training-groups/groupId="+groupId)
-        }else if(props.user.claims.role == "SPORTSMAN"){
-            props.goToPage("/sportsmanApp/userId="+props.user.uid+"/training-groups/groupId="+groupId)
+        props.goToPage("/training-groups/groupId="+groupId)
+
+    }
+
+    const isOwner = (group) => {
+        //console.log(props.user.uid)
+        //console.log(props.group.owner)
+        if(props.user.uid===group.owner){
+            return true
         }
+        return false
     }
 
     const groupsItems = props.groups.map((group, index) => {
+        
+        const owner = isOwner(group)
+        console.log(owner)
         return (
             <Grid item xs={6} lg={2} key={index}>
                 <Paper style={{ height: "100%", padding: 10 }}>
@@ -80,7 +95,7 @@ function GroupGrid(props) {
                     <p>{group.groupId}</p>
                     <p>Members: {group.members ? group.members.length : 0}</p>
                     <Button onClick={()=>handleOpenGroup(group.groupId)}>Open</Button>
-                    <ActionButton group={group} user={props.user}/>
+                    <ActionButton group={group} user={props.user} isOwner={owner}/>
                 </Paper>
             </Grid>
         )

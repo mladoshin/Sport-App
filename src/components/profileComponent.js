@@ -81,7 +81,7 @@ function ProfileComponent(props) {
   return (
     <React.Fragment>
       <Container component="main" maxWidth="xl" className={classes.mainContainer}>
-        <h1>{props.userRole == "coach" ? "Coach " : "Sportsman "}Profile</h1>
+        <h1>Profile</h1>
         <Avatar alt="avatar" src={props.user.photoURL} style={{ width: 200, height: 200 }} onClick={handleAvatarUpload} />
         <Suspense fallback={null}>
           <h3>{props.user.displayName}</h3>

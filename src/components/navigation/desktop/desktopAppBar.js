@@ -5,9 +5,6 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { Button, Drawer, AppBar, Toolbar, List, Divider, ListItem, ListItemIcon, Avatar, IconButton, ListItemText } from '@material-ui/core'
 
 // importing icons
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import MailIcon from '@material-ui/icons/Mail';
 import NotificationsRoundedIcon from '@material-ui/icons/NotificationsRounded';
 
 

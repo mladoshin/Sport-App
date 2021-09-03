@@ -14,11 +14,6 @@ function NewsPublishComponent(props) {
 
     const [commited, setCommited] = useState(false)
 
-
-    useEffect(()=>{
-        console.log(photosBLOB)
-    }, [photosBLOB])
-
     function handleConvertImagesToBlob(){
         var blobs = [];
         [...photos].forEach((photo, i) => {

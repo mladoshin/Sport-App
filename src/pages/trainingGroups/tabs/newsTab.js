@@ -20,10 +20,6 @@ function NewsTab(props) {
         return firebase.getPostsFromTrainingGroup(props.group, setPosts)
     }, [])
 
-    useEffect(()=>{
-        console.log(photosBLOB)
-    }, [photosBLOB])
-
     function handleConvertImagesToBlob(){
         var blobs = [];
         [...photos].forEach((photo, i) => {
@@ -46,9 +42,6 @@ function NewsTab(props) {
         })
         
     }
-
-    console.log('%cposts', 'color: yellow; font-weight: 900; font-size: 20px')
-    console.log(posts)
 
 
     function handlePublishPost(caption){

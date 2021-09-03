@@ -66,11 +66,6 @@ const useStyles = makeStyles((theme) => ({
 function TrainingGroupsPage(props) {
     const classes = useStyles();
 
-    //function for adding new training groups
-    function handleAddGroup(){
-
-    }
-
     return (
         <>
             <Container className={classes.mainContainer} maxWidth="xl">

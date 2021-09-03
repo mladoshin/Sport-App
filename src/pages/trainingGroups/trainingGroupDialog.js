@@ -67,17 +67,6 @@ function GroupDialog(props) {
         }
     }, [])
 
-    //useEffect to fetch the note's content and set the title state to props.open.payload.title
-    useEffect(() => {
-        //subscribe to note content listener
-        if (props.open.mode == "WATCH") {
-            //firebase.getNote(firebase.getCurrentUserId(), props.open.payload.noteId, setText)
-            //setTitle(props.open.payload.title)
-        }
-
-
-    }, [props.open.payload])
-
 
     //function for closing the dialog
     function handleClose() {
@@ -86,22 +75,9 @@ function GroupDialog(props) {
 
     //function for adding new note 
     function handleAddGroupd() {
-        let membersId = []
-        selectedMembers.forEach((member) => {
-            membersId.push(member.id)
-        })
         
-
-        let newGroup = {
-            name: title,
-            isPrivate: isPrivate,
-            dateCreated: Date.now(),
-            owner: props.uid,
-            members: membersId
-        }
-        console.log(newGroup)
-        
-        firebase.addTrainingGroup(newGroup, props.uid, membersId, selectedMembers)
+        //firebase.addTrainingGroup(newGroup, props.uid, membersId, selectedMembers)
+        firebase.createNewTrainingGroup(selectedMembers, title, isPrivate)
         handleClose()
 
     }
@@ -113,6 +89,7 @@ function GroupDialog(props) {
 
     function handleUpdateGroup(){
         let updates = {}
+
         if(props.open.payload.name !== title){
             console.log("The title needs to be updated!")
             updates.name = title
@@ -178,7 +155,7 @@ function GroupDialog(props) {
             </AppBar>
             <Container>
                 <h1>Dialog Content</h1>
-                <DialogForm isPrivate={isPrivate} handleChange={handleChange} allAthletes={allAthletes} payload={props.open.payload}/>
+                <DialogForm isPrivate={isPrivate} handleChange={handleChange} allAthletes={allAthletes} payload={props.open.payload} memberIds={selectedMembers} setMemberIds={setSelectedMembers}/>
             </Container>
             
 

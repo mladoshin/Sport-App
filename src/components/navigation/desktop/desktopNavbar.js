@@ -1,16 +1,9 @@
 // <---------- Navbar for desktop devices---------->
 
-import React, { Suspense } from 'react';
-import clsx from 'clsx';
+import React from 'react';
 import { withRouter } from 'react-router-dom';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
-import { CssBaseline, Drawer, AppBar, Toolbar, List, Divider, ListItem, ListItemIcon, Avatar, IconButton, ListItemText} from '@material-ui/core'
-
-// importing icons
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import MailIcon from '@material-ui/icons/Mail';
-import NotificationsRoundedIcon from '@material-ui/icons/NotificationsRounded';
+import { CssBaseline } from '@material-ui/core'
 
 import DesktopDrawer from './desktopDrawer';
 import DesktopAppBar from './desktopAppBar';
@@ -31,7 +24,6 @@ const useStyles = makeStyles((theme) => ({
 function DesktopNavbar(props) {
     const classes = useStyles();
     const theme = useTheme();
-    //const [open, setOpen] = React.useState(false);
     var open = props.open
     var setOpen = props.setOpen
 
@@ -43,24 +35,8 @@ function DesktopNavbar(props) {
         }
     }
 
-    function openProfile() {
-        let role = props.user.claims.role
-        
-        // if (role == "ADMIN") {
-        //     props.history.push("/adminApp/profile")
-        // } else if (role == "COACH") {
-        //     props.history.push("/coachApp/coachId=" + props.user.uid + "/profile")
-        // } else if (role == "SPORTSMAN") {
-        //     props.history.push("/sportsmanApp/userId=" + props.user.uid + "/profile")
-        // }
-
-        if (role == "ADMIN") {
-            props.history.push("/adminApp")
-        } else if (role == "COACH") {
-            props.history.push("/coachApp/coachId=" + props.user.uid)
-        } else if (role == "SPORTSMAN") {
-            props.history.push("/sportsmanApp/userId=" + props.user.uid)
-        }
+    function openProfile() {       
+        props.history.push("/home")
     }
 
     function handleMenuButtonClick(destination) {
@@ -68,10 +44,6 @@ function DesktopNavbar(props) {
         
         if (role == "ADMIN") {
             props.history.push("/adminApp" + destination)
-        } else if (role == "COACH") {
-            props.history.push("/coachApp/coachId=" + props.user.uid + "" + destination)
-        } else if (role == "SPORTSMAN") {
-            props.history.push("/sportsmanApp/userId=" + props.user.uid + "" + destination)
         }else{
             // if the user is not logged in
             props.history.push(destination)

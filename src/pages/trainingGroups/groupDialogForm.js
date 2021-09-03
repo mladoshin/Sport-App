@@ -39,7 +39,11 @@ function DialogForm(props) {
     console.log(props)
     const classes = useStyles();
     const [email, setEmail] = useState("")
-    const [selectedMemberIDs, setSelectedMemberIDs] = useState(props.payload.members ? props.payload.members : [])
+    //const [selectedMemberIDs, setSelectedMemberIDs] = useState(props.payload.members ? props.payload.members : [])
+
+    const selectedMemberIDs = props.memberIds
+    const setSelectedMemberIDs = props.setMemberIds
+
     const [members, setMembers] = useState([])
     const [requests, setRequests] = useState([])
     const allAthletes = props.allAthletes
@@ -61,9 +65,6 @@ function DialogForm(props) {
         setSelectedMemberIDs(event.target.value);
     };
 
-    console.log("Selected Users: ")
-    console.log(selectedMemberIDs)
-
     function injectContent(selected) {
         let val = []
         selected.map((item, index) => {
@@ -79,24 +80,22 @@ function DialogForm(props) {
     }
 
     function handleAddUser(){
-        firebase.getUserByEmail(email).then(user => {
-            console.log(user)
-            let newMember = {
-                id: user.data.uid,
-                name: user.data.name,
-                surname: user.data.surname,
-                photoURL: user.data.photoURL,
-                role: "SPORTSMAN",
-                dateJoined: Date.now()
-            }
-            firebase.addMembersToTrainingGroup(props.payload.id, [newMember])
-        }).catch(err => console.log(err))
+        console.log(props)
+        const memberId = email
+        firebase.addMembersToTrainingGroup([memberId], props.payload.id)
+        // firebase.getUserByEmail(email).then(user => {
+        //     console.log(user)
+        //     const memberId = user.data.uid
+        //     console.log("New member with id: "+memberId)
+        //     //firebase.addMembersToTrainingGroup([memberId], props.open.payload.id)
+        // }).catch(err => console.log(err))
         
     }
 
     function handleRemoveUser(uid){
         alert("Deleting user with id: "+uid)
         //firebase.removeMemberFromTrainingGroup(props.payload.id, [uid])
+        firebase.removeMembersFromTrainingGroup([uid], props.payload.id)
     }
 
     function handleAcceptRequest(applicant){

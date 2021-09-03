@@ -4,27 +4,46 @@ import firebase from "../firebase/firebase"
 import { Button, CircularProgress, Container } from '@material-ui/core';
 
 
-function doesChatExist(memberId){
-    return new Promise((resolve, reject) => {
-        
-        firebase.fireDB.collection('chat-groups').where("memberIDs", "array-contains", firebase.getCurrentUserId())
-            .get()
-            .then(snapshot => {
-                let res = false
-                snapshot.forEach(doc => {
-                    const ids = doc.get("memberIDs")
-                    if(ids[0]===memberId || ids[1]===memberId){
-                        res = true
-                    }
-                })
-                resolve(res)
-                
-            })
-            .catch(reason => {
-                console.log('db.collection("users").get gets err, reason: ' + reason);
-                reject(reason);
-            });
-    });
+function getUsersDataByIds(userIds){
+    let promises = []
+    userIds.forEach(id => {
+        const promise = new Promise((resolve, reject) => {
+            firebase.fireDB.collection("users").doc(id).get().then(snapshot => {
+                const data = snapshot.data()
+                data.uid = snapshot.id
+                resolve(data)
+            }).catch(err => reject(err))
+        })
+        promises.push(promise)
+    })
+
+    return Promise.all(promises)
+}
+
+function prepareMembersData(data, ownerId){
+    data.forEach(member => {
+        let role = "member"
+        if(member.uid === ownerId){
+            role = "owner"
+        }
+
+        const memberData = {
+            name: member.name,
+            surname: member.surname,
+            photoURL: member.photoURL,
+            role: role,
+            uid: member.uid
+        }
+
+        //add the member to the subcollection
+        console.log(memberData)
+    })
+}
+
+function createTrainingGroup(memberIds, ownerId){
+    getUsersDataByIds([...memberIds, ownerId]).then(res => {
+        prepareMembersData(res, ownerId)
+    })
 }
 
 function DashboardPage() {
@@ -69,9 +88,9 @@ function DashboardPage() {
                 )
             })}
             <Button onClick={()=>{
-                firebase.doesChatExist("gIq6JWDoH9dxLTpFeV0wHqy2tDy1").then(res => {
-                    console.log(res)
-                })
+                const memberIds = ["eEMwFXdbbHQoSl5I9dDNsAtFhKv2", "gIq6JWDoH9dxLTpFeV0wHqy2tDy1", "2CHacBYdEKUcg0IDTWCKNxFj9wT2"]
+                const ownerId = "SWbQIG1WKzVqrAHlyAtyODaqxlZ2"
+                createTrainingGroup(memberIds, ownerId)
                 }}>Update Chats</Button>
         </div>
     )

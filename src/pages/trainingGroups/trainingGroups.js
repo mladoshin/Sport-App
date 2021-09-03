@@ -15,23 +15,19 @@ import AllTrainingGroupsComponent from "./allTrainingGroupsComponent"
 function GroupGrid(props) {
     console.log(props.user)
 
-    function handleOpenGroup(groupId){
-        if(props.user.role == "COACH"){
-            props.goToPage("/coachApp/coachId="+props.user.uid+"/training-groups/groupId="+groupId)
-        }else if(props.user.role == "SPORTSMAN"){
-            props.goToPage("/sportsmanApp/userId="+props.user.uid+"/training-groups/groupId="+groupId)
-        }
+    function handleOpenGroup(groupId) {
+        props.goToPage("/training-groups/groupId=" + groupId)
     }
 
     const groupsItems = props.groups.map((group, index) => {
         return (
             <Grid item xs={6} lg={2} style={{}}>
                 <Paper style={{ height: "100%", padding: 10 }}>
-                    <h1 style={{margin: 0, textAlign: "center"}}>{group.name}</h1>
+                    <h1 style={{ margin: 0, textAlign: "center" }}>{group.name}</h1>
                     <p>Status: {group.isPrivate ? "Private" : "Public"}</p>
                     <p>{group.groupId}</p>
                     <p>Members: {group.members ? group.members.length : 0}</p>
-                    <Button onClick={()=>handleOpenGroup(group.groupId)}>Open</Button>
+                    <Button onClick={() => handleOpenGroup(group.groupId)}>Open</Button>
                 </Paper>
             </Grid>
         )
@@ -49,7 +45,7 @@ function TrainingGroupsComponent(props) {
     //state for all workouts
     const [groups, setGroups] = useState([])
     const [allPublicGroups, setAllPublicGroups] = useState([])
-    
+
     //dialog state
     const [open, setOpen] = useState({ mode: null, payload: false })
 
@@ -58,44 +54,39 @@ function TrainingGroupsComponent(props) {
     //fetch all groups in this useEffect
     useEffect(() => {
         console.log(props.user)
-        
+
         //fetch all the groups from the database
-        if(props.user.claims && props.user.claims.role == "COACH"){
+        if (props.user.claims && props.user.claims.role == "COACH") {
             return firebase.getOwnerTrainingGroups(props.user.uid, setGroups)
-        }else if(props.user.claims && props.user.claims.role == "SPORTSMAN"){
+        } else if (props.user.claims && props.user.claims.role == "SPORTSMAN") {
             return firebase.getUserTrainingGroups(props.user.uid, setGroups)
         }
-        
+
         //firebase.getWorkouts(props.user.uid, date, setGroups)
     }, [props.user.uid])
 
+    
     //function for adding a a new groups
     function handleOpenGroupDialog() {
-        if (props.user.claims.role == "COACH") {
-            setOpen({ payload: {}, mode: "CREATE" })
-        }
-
+        setOpen({ payload: {}, mode: "CREATE" })
     }
 
     return (
         <>
-            {props.type == "COACH" ?
-                <Fab color="primary" aria-label="add" style={{ position: "absolute", right: 20, bottom: 20 }} onClick={() => handleOpenGroupDialog()}>
-                    <AddIcon />
-                </Fab>
-                :
-                null
-            }
+            <Fab color="primary" aria-label="add" style={{ position: "fixed", right: 20, bottom: 20 }} onClick={() => handleOpenGroupDialog()}>
+                <AddIcon />
+            </Fab>
+
 
 
             <h1>My training groups:</h1>
-            <GroupGrid groups={groups} goToPage={props.history.push} user={{role: props.user.claims && props.user.claims.role, uid: props.user.uid}}/>
+            <GroupGrid groups={groups} goToPage={props.history.push} user={{ role: props.user.claims && props.user.claims.role, uid: props.user.uid }} />
 
             <br />
-            
-            <AllTrainingGroupsComponent/>
 
-            {open.payload ? <GroupDialog open={open} setOpen={setOpen} uid={props.user.uid}/> : null}
+            <AllTrainingGroupsComponent />
+
+            {open.payload ? <GroupDialog open={open} setOpen={setOpen} uid={props.user.uid} /> : null}
         </>
     );
 }

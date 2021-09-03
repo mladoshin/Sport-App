@@ -73,7 +73,7 @@ export default function DesktopDrawer({ open, menuItems, handleMenuButtonClick, 
                 {menuItems.map((menuItem, index) => {
                     return (
                         <ListItem button key={index} onClick={() => handleMenuButtonClick(menuItem.path)}>
-                            <ListItemIcon><MailIcon /></ListItemIcon>
+                            <ListItemIcon>{menuItem.icon ? <menuItem.icon/> : null}</ListItemIcon>
                             <ListItemText>{menuItem.title}</ListItemText>
                         </ListItem>
                     )

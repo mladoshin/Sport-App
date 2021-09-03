@@ -12,11 +12,20 @@ const useStyles = makeStyles((theme) => ({
         height: "60px", 
         display: "flex", 
         flexDirection: "row", 
-        alignItems: "center"
+        alignItems: "center",
+
     },
     textHeading: {
         display: "inline", 
         margin: 0
+    },
+    nameWrapper: {
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "start",
+        justifyContent: "center"
     }
 
 }));
@@ -33,8 +42,8 @@ function CustomListItem(props) {
         <ListItem button className={classes.listItem}>
             
             <Paper className={classes.paper} >
-                <Avatar src={props.recipient.photoURL} onClick={props.onAvatarClick}/>
-                <div onClick={props.onClick} onContextMenu={props.onRightClick}>
+                <Avatar src={props.recipient.photoURL} onClick={props.onAvatarClick} style={{marginRight: 15, marginLeft: 15}}/>
+                <div onClick={props.onClick} onContextMenu={props.onRightClick} className={classes.nameWrapper}>
                     <h4 className={classes.textHeading}>{props.mode !== "GROUP" ? userName : props.chat.members.join(", ")}</h4>
                     
                 </div>

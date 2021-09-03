@@ -75,21 +75,10 @@ function TrainingGroupPage(props) {
     const [isViewable, setIsViewable] = useState(true)
     const [groupContent, setGroupContent] = useState({ name: "", owner: "", members: [] })
     const [groupMembers, setGroupMembers] = useState([])
+    const [groupOwners, setGroupOwners] = useState([])
     const [loaded, setLoaded] = useState(false)
-    
+
     const [currentPage, setCurrentPage] = useState(0)
-
-    //console.log('%cGroup Content: ', 'color: orange; font-weight: 900; font-size: 20px')
-    //console.log({...groupContent})
-
-    //console.log('%cGroup members: ', 'color: green; font-weight: 900; font-size: 20px')
-    //console.log(groupMembers)
-
-    //console.log('%c:memberPhotoURLS ', 'color: red; font-weight: 900; font-size: 20px')
-    //console.log(memberPhotoURLS)
-
-    console.log(loaded ? "loaded" : null)
-    console.log(groupContent.id)
 
     //fetch the training group general information
     useEffect(() => {
@@ -97,65 +86,65 @@ function TrainingGroupPage(props) {
     }, [])
 
     //fetch the training group members' list
-    useEffect(() => {      
-        return firebase.getAllMembersInTrainingGroup(groupId, setGroupMembers)
+    useEffect(() => {
+        return firebase.getAllMembersInTrainingGroup(groupId, setGroupMembers, setGroupOwners)
     }, [])
 
     //useEffect to check if user can watch the group content
-    useEffect(()=>{
+    useEffect(() => {
         let isInGroup = isUserInGroup(props.user.uid, groupContent.members)
-        
-        if(groupContent.isPrivate && !isInGroup && groupContent.owner !== props.user.uid){
+
+        if (groupContent.isPrivate && !isInGroup && groupContent.owner !== props.user.uid) {
             //fetch the content for members
             console.log('%cThe user is NOT member in private group.', 'color: red; font-weight: 900; font-size: 20px')
             setIsViewable(false)
             setLoaded(true)
-        }else if(isInGroup || groupContent.owner == props.user.uid){
+        } else if (isInGroup || groupContent.owner == props.user.uid) {
             console.log('%cThe user is a member in private group! ', 'color: red; font-weight: 900; font-size: 20px')
             setLoaded(true)
         }
     }, [groupContent])
 
+    console.log(groupMembers)
 
-    function isUserInGroup(uid, groupMembers){
+    function isUserInGroup(uid, groupMembers) {
         let res = groupMembers.indexOf(uid)
         return res > -1 ? true : false
     }
 
     //function for owners only (editing and settings)
-    function handleOpenDialog(){
-        if (groupContent.owner === props.user.uid){
-            setOpen({payload: groupContent, mode: "EDIT"})
+    function handleOpenDialog() {
+        if (groupContent.owner === props.user.uid) {
+            setOpen({ payload: groupContent, mode: "EDIT" })
         }
     }
 
-    function handleUnsubscribe(){
+    function handleUnsubscribe() {
         firebase.removeMemberFromTrainingGroup(groupContent.id, [props.user.uid])
     }
 
-    function ActionButton(){
+    function ActionButton() {
         const isInGroup = isUserInGroup(props.user.uid, groupContent.members)
         const isOwner = groupContent.owner === props.user.uid
-        console.log('%cisInGroup: ', 'font-size: 30px; font-weight: 900;')
-        console.log(isInGroup)
-        if (props.user.claims.role == "COACH" && isOwner){
+
+        if (isOwner) {
             return (
                 <Button size="small" color="secondary" onClick={handleOpenDialog}>Settings</Button>
             )
-        }else{
-            if(isInGroup){
+        } else {
+            if (isInGroup) {
                 //if the sportsman is in training group
-                return(
+                return (
                     <Button size="small" color="secondary" onClick={handleUnsubscribe}>Unsubscribe</Button>
                 )
-                
-            }else if(!isInGroup && !groupContent.isPrivate){
+
+            } else if (!isInGroup && !groupContent.isPrivate) {
                 //if the sportsman is NOT in training group
-                return(
+                return (
                     <Button size="small" color="secondary">Subscribe</Button>
                 )
-            }else{
-                return(
+            } else {
+                return (
                     <Button size="small" color="secondary">Apply</Button>
                 )
             }
@@ -182,22 +171,45 @@ function TrainingGroupPage(props) {
         }
     }
 
-    function handleChangePage(event, newValue){
+    function handleChangePage(event, newValue) {
         setCurrentPage(newValue)
     }
 
     //Tab panel component to render right content (for routing)
     const TabPanel = () => {
-        if (currentPage === 0){
+        if (currentPage === 0) {
             //show posts page
-            return <NewsTab group={groupContent}/>
-        }else if(currentPage === 1){
+            return <NewsTab group={groupContent} />
+        } else if (currentPage === 1) {
             //show workout page
-            return <WorkoutsTab group={groupContent}/>
-        }else if(currentPage === 2){
+            return <WorkoutsTab group={groupContent} />
+        } else if (currentPage === 2) {
             //show chat
-            return <ChatTab group={groupContent}/>
+            return <ChatTab group={groupContent} />
         }
+    }
+
+    function OwnersGrid() {
+        return (
+            <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <div style={{width: 100}}>
+                    <h3>Owners:</h3>
+                </div>
+                
+                <Grid container>
+                    {
+                        groupOwners.map(owner => {
+                            return (
+                                <Grid item lg={1}>
+                                    <Avatar src={owner.photoURL} style={{ width: 40, height: 40, border: "2px solid grey" }} onClick={() => alert(owner.uid)} />
+                                </Grid>
+                            )
+                        })
+                    }
+                </Grid>
+            </div>
+
+        )
     }
 
     return (
@@ -207,23 +219,25 @@ function TrainingGroupPage(props) {
                 <Paper style={{ padding: 15, display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
                     <div style={{ flexGrow: 1 }}>
                         <h1>{groupContent.name}</h1>
-                        <h3>Owner: {groupContent.owner}</h3>
-                        {props.user.claims && <ActionButton/> }
+                        
+                        <OwnersGrid />
+                        {props.user.claims && <ActionButton />}
                     </div>
                     <div style={{ textAlign: "center", padding: 10, width: "40%", borderLeft: "1px solid black" }}>
-                        <h3>Members: {groupContent.members && groupContent.members.length}</h3>
+                        <h3>Members: {groupMembers?.length}</h3>
                         <Grid container>
                             {groupMembers.map((member, index) => {
+
                                 return (
                                     <Grid item lg={1}>
-                                        <Avatar src={member.photoURL} style={{ width: 40, height: 40, border: "2px solid grey" }} onClick={()=>alert(member.uid)}/>
+                                        <Avatar src={member.photoURL} style={{ width: 40, height: 40, border: "2px solid grey" }} onClick={() => alert(member.uid)} />
                                     </Grid>
                                 )
                             })}
                         </Grid>
                         <Button size="small" color="primary">Show all members</Button>
                     </div>
-                    <div style={{width: "100%", borderTop: "1px solid black", paddingTop: 15, display: isViewable && loaded ? "block" : "none"}} >
+                    <div style={{ width: "100%", borderTop: "1px solid black", paddingTop: 15, display: isViewable && loaded ? "block" : "none" }} >
                         <Tabs
                             value={currentPage}
                             onChange={handleChangePage}
@@ -239,26 +253,26 @@ function TrainingGroupPage(props) {
 
                 </Paper>
 
-                
-                
+
+
 
                 <Paper style={{ marginTop: 10, padding: 15, display: isViewable && loaded ? "block" : "none" }}>
-                    <TabPanel currentPage={currentPage}/>
+                    <TabPanel currentPage={currentPage} />
                 </Paper>
 
-                {loaded && !isViewable ? 
-                <Paper style={{ marginTop: 10, padding: 15}}>
-                    <div style={{ textAlign: "center" }}>
-                        <h3>You can't see the content because the training group is private!</h3>
-                    </div>
-                </Paper>
-                :
-                null
+                {loaded && !isViewable ?
+                    <Paper style={{ marginTop: 10, padding: 15 }}>
+                        <div style={{ textAlign: "center" }}>
+                            <h3>You can't see the content because the training group is private!</h3>
+                        </div>
+                    </Paper>
+                    :
+                    null
                 }
 
 
 
-                {open.payload ? <GroupDialog open={open} setOpen={setOpen} uid={props.user.uid}/> : null}
+                {open.payload ? <GroupDialog open={open} setOpen={setOpen} uid={props.user.uid} /> : null}
 
             </Container>
         </>

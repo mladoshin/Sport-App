@@ -43,14 +43,25 @@ class Firebase {
     //this.sayHello = this.functions.httpsCallable("sayHello")
     this.getUserIP = this.functions.httpsCallable("getUserIP")
 
+
+    // <---------------callable functions for training groups------------------------>
+
+    let createTrainingGroup = this.functions.httpsCallable("createTrainingGroup")
+    this.createNewTrainingGroup = (memberIds, groupName, isPrivate) => createTrainingGroup({memberIds: memberIds, groupName: groupName, isPrivate: isPrivate})
+
+    let addMembers = this.functions.httpsCallable("addMembersToTrainingGroup")
+    this.addMembersToTrainingGroup = (memberIds, groupId) => addMembers({memberIds, groupId})
+
+    let removeMembers = this.functions.httpsCallable("removeMembersFromTrainingGroup")
+    this.removeMembersFromTrainingGroup = (memberIds, groupId) => removeMembers({memberIds, groupId})
+    // <---------------callable functions for training groups------------------------>
+
+
     let getUserByEmail = this.functions.httpsCallable("getUserByEmail")
     this.getUserByEmail = (email) => getUserByEmail({ email })
 
     let doesChatExist = this.functions.httpsCallable("doesChatExist")
     this.doesChatExist = (memberId) => doesChatExist({ memberId })
-
-    //this.getAllUsers = this.functions.httpsCallable("getAllUsers")
-    //firebaseall.analytics()
   }
 
   //function for logging the user in
@@ -853,15 +864,15 @@ class Firebase {
 
   //<-----------------------FUNCTIONS FOR TRAINING GROUPS (START)----------------------->//
 
-  addTrainingGroup(payload, coachId, membersId, members) {
+  // addTrainingGroup(payload, coachId, membersId, members) {
 
-    this.fireDB.collection("training-groups").add(payload)
-      .then((docRef) => {
-        //adding new group shortcut to coach (can be done using firebase functions)
-        this.addTrainingGroupToCoach({ name: payload.name, dateCreated: payload.dateCreated, isPrivate: payload.isPrivate, members: membersId }, coachId, docRef.id)
-        this.addMembersToTrainingGroup(docRef.id, members)
-      })
-  }
+  //   this.fireDB.collection("training-groups").add(payload)
+  //     .then((docRef) => {
+  //       //adding new group shortcut to coach (can be done using firebase functions)
+  //       this.addTrainingGroupToCoach({ name: payload.name, dateCreated: payload.dateCreated, isPrivate: payload.isPrivate, members: membersId }, coachId, docRef.id)
+  //       this.addMembersToTrainingGroup(docRef.id, members)
+  //     })
+  // }
 
   //only for owners
   updateTrainingGroupInfo(updates, groupId) {
@@ -881,16 +892,24 @@ class Firebase {
     })
   }
 
-  getAllMembersInTrainingGroup(groupId, setMembers) {
+  getAllMembersInTrainingGroup(groupId, setMembers, setOwners) {
     this.fireDB.collection("training-groups").doc(groupId).collection("members")
       .onSnapshot((snapshot) => {
         let members = []
+        let owners = []
         snapshot.forEach((member, index) => {
           let memberItem = member.data()
           memberItem.uid = member.id
-          members.push(memberItem)
+          
+          if(memberItem.role==="owner"){
+            owners.push(memberItem)
+          }else{
+            members.push(memberItem)
+          }
+          
         })
         setMembers(members)
+        setOwners(owners)
       });
   }
 
@@ -926,37 +945,6 @@ class Firebase {
 
   removeApplicantFromTrainingGroup(groupId, userId) {
     this.fireDB.collection("training-groups").doc(groupId).collection("applicants").doc(userId).delete().catch(err => console.log(err))
-  }
-
-
-
-  addMembersToTrainingGroup(groupId, members) {
-    members.forEach((member) => {
-      console.log(member)
-      let addedMember = {
-        name: member.name,
-        surname: member.surname,
-        photoURL: member.photoURL,
-        dateJoined: Date.now(),
-        role: member.role
-      }
-      this.fireDB.collection("training-groups").doc(groupId).collection("members").doc(member.id).set(addedMember).catch(err => console.log(err))
-    })
-
-  }
-
-  removeMemberFromTrainingGroup(groupId, memeberIds) {
-    memeberIds.forEach((memberId, index) => {
-      this.fireDB.collection("training-groups").doc(groupId).collection("members").doc(memberId).delete()
-    })
-  }
-
-  addTrainingGroupToCoach(payload, coachId, groupId) {
-    this.fireDB.collection("users").doc(coachId).collection("training-groups").doc(groupId).set(payload)
-      .then(() => {
-        console.log("The training group has been successfully added to coach!")
-      })
-      .catch(err => console.log(err))
   }
 
   getOwnerTrainingGroups(coachId, setGroups) {
