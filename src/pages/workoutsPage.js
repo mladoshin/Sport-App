@@ -1,16 +1,16 @@
-//<-----------------------NOTES PAGE----------------------->//
+//<-----------------------WORKOUTS PAGE (WORKOUT BUILDER)----------------------->//
 import React from "react"
 import { connect } from "react-redux"
 import { Container, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
-import firebase from '../../firebase/firebase';
+import firebase from '../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
 import AddIcon from '@material-ui/icons/Add';
 
-import NoteComponent from "../notes/App"
+import WorkoutComponent from "../components/workoutBuilder/App"
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -54,12 +54,12 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-function NotesPage(props) {
+function WorkoutsPage(props) {
     const classes = useStyles();
     return (
         <>
             <Container className={classes.mainContainer}>
-                <h1>Notes Page</h1>
+                <h1>Workouts Page</h1>
 
                 <div style={{ height: 45 }}>
                     <TextField id="outlined-basic" label="Search for workouts" variant="outlined" style={{ height: "100%" }}
@@ -86,7 +86,7 @@ function NotesPage(props) {
                 </Button>
                 </div>
 
-                <NoteComponent/>
+                <WorkoutComponent/>
 
             </Container>
 
@@ -95,4 +95,4 @@ function NotesPage(props) {
     )
 }
 
-export default NotesPage;
+export default WorkoutsPage;

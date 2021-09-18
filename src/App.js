@@ -4,40 +4,36 @@ import { Switch, Route, BrowserRouter } from "react-router-dom";
 import { CircularProgress, Container, createMuiTheme, ThemeProvider } from '@material-ui/core';
 import firebase from './firebase/firebase'
 
+//importing route pages
 import HomePage from "./pages/landingPage/homePage"
 import SignInPage from "./pages/landingPage/signin"
 import SignUpPage from "./pages/landingPage/signup"
 import ErrorPage from "./pages/404"
+import AdminApp from './adminApp/adminApp';
 
-// import SportsmanApp from './pages/sportsmanApp/sportsmanApp';
-// import CoachApp from './pages/coachApp/coachApp';
-import AdminApp from './pages/adminApp/adminApp';
-
-import AdminProfile from './pages/adminApp/profile';
-// import CoachProfile from './pages/coachApp/profile';
-// import SportsmanProfile from './pages/sportsmanApp/profile';
+import AdminProfile from './adminApp/profile';
 import Navbar from './components/navigation/navbar';
-import WorkoutDiary from './pages/adminApp/workoutDiary';
-import WorkoutsPage from './pages/coachApp/workoutsPage';
-import NotesPage from './pages/coachApp/notesPage';
-import CalendarPage from './pages/coachApp/calendarPage';
-import TrainingGroupsPage from './pages/coachApp/trainingGroupsPage';
-
+import WorkoutDiary from './adminApp/workoutDiary';
+import CalendarPage from './pages/calendarPage';
+import TrainingGroupsPage from './pages/trainingGroupsPage';
+import DashboardPage from './pages/dashboardPage';
+import ProfilePage from './pages/ProfilePage';
 import ChatPage from "./pages/chatPage"
-
+import UserProfilePage from './pages/userProfilePage';
 //page for individual group
-import TrainingGroupPage from './pages/trainingGroups/TrainingGroupPage';
-import WorkoutPlanPage from './pages/coachApp/workoutPlanPage';
+import TrainingGroupPage from './pages/TrainingGroupPage';
+import WorkoutPlanPage from './pages/workoutPlanPage';
+import WorkoutsPage from './pages/workoutsPage';
+import NotesPage from './pages/notesPage';
 
 import isMobile from './checkDeviceFunction/isMobile';
 
 // import the app config file
 import './config';
-import UserProfilePage from './pages/userProfilePage';
+
 
 import { useAuthState } from 'react-firebase-hooks/auth';
-import DashboardPage from './pages/dashboardPage';
-import ProfilePage from './pages/ProfilePage';
+
 
 //APP THEMES (DARK AND LIGHT)
 const DarkTheme = createMuiTheme({
@@ -141,6 +137,10 @@ function App(props) {
           <Route exact path="/chats" render={() => <Navbar><ChatPage /></Navbar>} />
           <Route exact path="/calendar" render={() => <Navbar><CalendarPage /></Navbar>} />
           <Route exact path="/viewProfile/uid=:uid" render={() => <Navbar><ProfilePage /></Navbar>} />
+
+          <Route exact path="/dashboard" render={() => <Navbar><DashboardPage /></Navbar>} />
+          <Route exact path="/notes" render={() => <Navbar><NotesPage /></Navbar>} />
+          <Route exact path="/workout-builder" render={() => <Navbar><WorkoutsPage /></Navbar>} />
 
           {/* ADMIN APP ROUTES*/}
           <Route exact path="/adminApp" render={() => <Navbar><AdminApp /></Navbar>} />

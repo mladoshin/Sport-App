@@ -12,33 +12,27 @@ function isUserInGroup(uid, groupMembers){
 function ActionButton({group, isOwner, user}){
 
     function subscribeToTrainingGroup(){
-        let member = {
-            id: user.uid,
-            name: user.displayName.split(" ")[0],
-            surname: user.displayName.split(" ")[1],
-            photoURL: user.photoURL,
-            dateJoined: Date.now(),
-            role: "SPORTSMAN"
-        }
+        // let member = {
+        //     id: user.uid,
+        //     name: user.displayName.split(" ")[0],
+        //     surname: user.displayName.split(" ")[1],
+        //     photoURL: user.photoURL,
+        //     dateJoined: Date.now(),
+        //     role: "SPORTSMAN"
+        // }
 
-        firebase.addMembersToTrainingGroup(group.groupId, [member])
+        //firebase.addMembersToTrainingGroup(group.groupId, [member])
+        firebase.subscribeToTrainingGroup(group.groupId, group.owner)
     }
 
     function handleApplyToTrainingGroup(){
         let text = window.prompt("Enter application text: ")
-        let applicant = {
-            name: user.displayName.split(" ")[0],
-            surname: user.displayName.split(" ")[1],
-            photoURL: user.photoURL,
-            applicationDate: Date.now(),
-            message: text
-        }
-        firebase.applyToTrainingGroup(group.groupId, user.uid, applicant)
+        
+        firebase.applyToTrainingGroup(group.groupId, text)
     }
 
     function unsubscribeFromTrainingGroup(){
-        let memberId = user.uid
-        firebase.removeMemberFromTrainingGroup(group.groupId, [memberId])
+        firebase.unsubscribeFromTrainingGroup(group.groupId)
     }
 
 
@@ -75,8 +69,6 @@ function GroupGrid(props) {
     }
 
     const isOwner = (group) => {
-        //console.log(props.user.uid)
-        //console.log(props.group.owner)
         if(props.user.uid===group.owner){
             return true
         }
@@ -92,7 +84,6 @@ function GroupGrid(props) {
                 <Paper style={{ height: "100%", padding: 10 }}>
                     <h1 style={{margin: 0, textAlign: "center"}}>{group.name}</h1>
                     <p>Status: {group.isPrivate ? "Private" : "Public"}</p>
-                    <p>{group.groupId}</p>
                     <p>Members: {group.members ? group.members.length : 0}</p>
                     <Button onClick={()=>handleOpenGroup(group.groupId)}>Open</Button>
                     <ActionButton group={group} user={props.user} isOwner={owner}/>
@@ -112,7 +103,7 @@ function AllTrainingGroupsComponent(props) {
     const [allPublicGroups, setAllPublicGroups] = useState([])
 
     useEffect(()=>{
-        return firebase.getAllPublicTrainingGroups(setAllPublicGroups)
+        return firebase.getAllTrainingGroups(setAllPublicGroups)
     }, [])
 
 

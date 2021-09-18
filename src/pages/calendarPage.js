@@ -4,13 +4,13 @@ import { connect } from "react-redux"
 import { Container, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
-import firebase from '../../firebase/firebase';
+import firebase from '../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
 import AddIcon from '@material-ui/icons/Add';
 
-import TodoCalendar from "../dailyTodos/App"
+import TodoCalendar from "../components/dailyTodos/App"
 
 //styles
 const useStyles = makeStyles((theme) => ({

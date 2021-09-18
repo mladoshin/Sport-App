@@ -47,13 +47,52 @@ class Firebase {
     // <---------------callable functions for training groups------------------------>
 
     let createTrainingGroup = this.functions.httpsCallable("createTrainingGroup")
-    this.createNewTrainingGroup = (memberIds, groupName, isPrivate) => createTrainingGroup({memberIds: memberIds, groupName: groupName, isPrivate: isPrivate})
+    this.createNewTrainingGroup = (memberIds, groupName, isPrivate) => createTrainingGroup({ memberIds: memberIds, groupName: groupName, isPrivate: isPrivate })
 
     let addMembers = this.functions.httpsCallable("addMembersToTrainingGroup")
-    this.addMembersToTrainingGroup = (memberIds, groupId) => addMembers({memberIds, groupId})
+    this.addMembersToTrainingGroup = (memberIds, groupId) => addMembers({ memberIds, groupId })
 
     let removeMembers = this.functions.httpsCallable("removeMembersFromTrainingGroup")
-    this.removeMembersFromTrainingGroup = (memberIds, groupId) => removeMembers({memberIds, groupId})
+    this.removeMembersFromTrainingGroup = (memberIds, groupId) => removeMembers({ memberIds, groupId })
+
+    let subscribe = this.functions.httpsCallable("subscribeToTrainingGroup")
+    this.subscribeToTrainingGroup = (groupId, groupOwnerId) => subscribe({ groupId, groupOwnerId })
+
+    let unsubscribe = this.functions.httpsCallable("unsubscribeFromTrainingGroup")
+    this.unsubscribeFromTrainingGroup = (groupId) => unsubscribe({ groupId })
+
+    let apply = this.functions.httpsCallable("applyToTrainingGroup")
+    this.applyToTrainingGroup = (groupId, message) => apply({ groupId, message })
+
+    let removeApplicant = this.functions.httpsCallable("removeApplicantFromTrainingGroup")
+    this.removeApplicantFromTrainingGroup = (uid, groupId) => removeApplicant({ uid, groupId })
+
+    let updateGroup = this.functions.httpsCallable("updateTrainingGroupInfo")
+    this.updateTrainingGroupInfo = (groupId, updates) => updateGroup({ groupId, updates })
+
+    let addNewPost = this.functions.httpsCallable("addNewPostToTrainingGroup")
+    this.addNewPostToTrainingGroup = (group, urls, caption) => addNewPost({ group, urls, caption })
+
+    let createWorkoutPlan_l = this.functions.httpsCallable("createWorkoutPlan")
+    this.createWorkoutPlan = (group, workoutPlan) => createWorkoutPlan_l({ group, workoutPlan })
+
+    let deleteWorkoutPlan = this.functions.httpsCallable("deleteWorkoutPlanFromTrainingGroup")
+    this.deleteWorkoutPlanFromTrainingGroup = (group, planId) => deleteWorkoutPlan({ group, planId })
+
+    let updateWorkoutPlan_l = this.functions.httpsCallable("updateWorkoutPlan")
+    this.updateWorkoutPlan = (group, planId, updates) => updateWorkoutPlan_l({ group, planId, updates })
+
+    let addRecipientToTrainingPlan_l = this.functions.httpsCallable("addRecipientToTrainingPlan")
+    this.addRecipientToTrainingPlan = (group, planId, recipientId) => addRecipientToTrainingPlan_l({ group, planId, recipientId })
+
+    let deleteRecipientFromTrainingPlan_l = this.functions.httpsCallable("deleteRecipientFromTrainingPlan")
+    this.deleteRecipientFromTrainingPlan = (group, planId, recipientId) => deleteRecipientFromTrainingPlan_l({ group, planId, recipientId })
+
+    let createDayWorkout_l = this.functions.httpsCallable("createDayWorkout")
+    this.createDayWorkout = (group, planId, workout) => createDayWorkout_l({ group, planId, workout })
+
+    let deleteDayWorkout_l = this.functions.httpsCallable("deleteDayWorkout")
+    this.deleteDayWorkout = (group, planId, workoutId) => deleteDayWorkout_l({ group, planId, workoutId })
     // <---------------callable functions for training groups------------------------>
 
 
@@ -329,184 +368,9 @@ class Firebase {
     console.log("email sent")
   }
 
-  //<-----------------------FUNCTIONS FOR GOAL TRACKER (START)----------------------->//
-  loadUserGoals(loadGoalItems, loadCategories) {
-    var starCountRef = this.db.ref(this.getCurrentUserId() + "/goals/").orderByKey();
-    starCountRef.on('value', function (snapshot) {
-      var goalItems = [] //local temp variable
-      var goalCategories = {}
-      var identificators = snapshot.val() ? Object.keys(snapshot.val()) : null
-      var i = 0
-
-      snapshot.forEach(function (snapItem) {
-        const item = snapItem.val();
-        item.id = identificators[i]
-        goalItems.push(item)
-
-        if (goalCategories[item.category] === undefined) {
-          goalCategories[item.category] = { count: 0, completedCount: 0 }
-        }
-        if (item.isCompleted) {
-          goalCategories[item.category].completedCount++
-        }
-        goalCategories[item.category].count++
-
-        i++
-      });
-
-      //goalCategories = Array.from(new Set(goalCategories))
-      //load json of all photos from database into redux state
-      loadGoalItems(goalItems)
-      loadCategories(goalCategories)
-    });
-  }
-
-  addNewGoal(props) {
-    //console.log(props)
-    try {
-      const id = this.db.ref(this.getCurrentUserId() + "/goals").push({
-        name: props.name,
-        category: props.category,
-        type: props.type,
-        units: props.units,
-        targetValue: props.targetValue,
-        startValue: props.startValue,
-        currentValue: props.startValue,
-        deadline: props.deadline,
-        description: props.description,
-        dateCreated: Date.now(),
-        isCompleted: false,
-        isArchieved: false,
-        startRepsValue: props.startRepsValue,
-        targetRepsValue: props.targetRepsValue,
-        currentRepsValue: props.startRepsValue
-      });
-
-      //this.quickResultUpdate(props.startValue, id.key)
-    } catch (err) {
-      alert(err.message)
-    }
-
-  }
-
-  completeGoal(id) {
-    try {
-      this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
-        isCompleted: true
-      });
-    } catch (err) {
-      alert(err.message)
-    }
-  }
-
-  uncompleteGoal(id) {
-    try {
-      this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
-        isCompleted: false
-      });
-    } catch (err) {
-      alert(err.message)
-    }
-  }
-
-  quickResultUpdate(result, currentRepsValue, id) {
-    console.log("Updating the goal through the quick update modal")
-    console.log(result, currentRepsValue, id)
-    try {
-      this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
-        currentValue: result,
-        currentRepsValue: currentRepsValue ? currentRepsValue : null
-      });
-
-    } catch (err) {
-      alert(err.message)
-    }
-  }
-
-  updateGoal(goal) {
-    console.log(goal)
-    try {
-      this.db.ref(this.getCurrentUserId() + "/goals/" + goal.id).update({
-        name: goal.name,
-        category: goal.category,
-        type: goal.type,
-        units: goal.units,
-        targetValue: goal.targetValue,
-        currentValue: goal.startValue,
-        deadline: goal.deadline,
-        description: goal.description,
-        targetRepsValue: goal.targetRepsValue ? goal.targetRepsValue : null,
-        currentRepsValue: goal.startRepsValue ? goal.startRepsValue : null
-      });
-      //this.quickResultUpdate(goal.startValue, goal.currentRepsValue, goal.id) //push currentValue to goal stats
-    } catch (err) {
-      alert(err.message)
-    }
-  }
-
-  deleteGoal(goalId) {
-    try {
-      this.db.ref(this.getCurrentUserId() + "/goals/" + goalId).remove()
-    } catch (err) {
-      alert(err.message)
-    }
-  }
-
-  //<-----------------------FUNCTIONS FOR GOAL TRACKER (END)----------------------->// P.S. -> NOT WORKING YET!
-
-  //function for checking if the user has verified his email
-  checkUser(id, type) {
-    if (this.auth.currentUser.emailVerified && type == "VERIFICATION") {
-      this.removeNotification(id, "VERIFIED")
-    }
-  }
-
-  //<-----------------------FUNCTIONS FOR NOTIFICATIONS (START)----------------------->//  P.S. -> NOT WORKING YET!
-  loadNotifications(loadNotificationsToRedux) {
-    console.log("Running firebase.loadNotifications!")
-    console.log(this.getCurrentUserId())
-    var starCountRef = this.db.ref("/" + this.getCurrentUserId() + "/notifications/").orderByKey().limitToLast(100);
-
-    starCountRef.on('value', function (snapshot) {
-      var notificationItems = [] //local temp variable
-      var identificators = snapshot.val() ? Object.keys(snapshot.val()) : null
-
-      var i = 0;
-
-      snapshot.forEach(function (snapItem) {
-        var item = snapItem.val()
-        item.id = identificators[i]
-
-        notificationItems.push(item)
-        i++
-      });
-
-      console.log(notificationItems)
-
-
-
-      //goalCategories = Array.from(new Set(goalCategories))
-      //load json of all photos from database into redux state
-      loadNotificationsToRedux(notificationItems)
-    });
-  }
-
-  removeNotification(notificationId, type) {
-    if (type !== "VERIFICATION") {
-      try {
-        this.db.ref(this.getCurrentUserId() + "/notifications/" + notificationId).remove()
-      } catch (err) {
-        alert(err.message)
-      }
-    }
-  }
-
-  //<-----------------------FUNCTIONS FOR NOTIFICATIONS (END)----------------------->//
-
-
   //function for uploading user's avatar to firebase storage
   uploadAvatarToStorage(avatar, updateAvatarState) {
-    const uploadTask = this.storage.ref("/users/"+this.getCurrentUserId() + "/avatar/avatar.jpg").put(avatar)
+    const uploadTask = this.storage.ref("/users/" + this.getCurrentUserId() + "/avatar/avatar.jpg").put(avatar)
     return uploadTask.on("state_changed",
       snapshot => {
 
@@ -547,12 +411,6 @@ class Firebase {
       timestamp: Date.now()
     })
   }
-
-  //addCircuitToWorkout(userId, workoutId, circuitId, circuits){
-  //    this.fireDB.collection("users").doc(userId).collection("workouts").doc(workoutId).update({
-  //       circuits: [...circuits, circuitId]
-  //    })
-  //}
 
   addCircuit(userId, circuit, workoutId) {
     return this.fireDB.collection("users").doc(this.getCurrentUserId()).collection("circuits").add({
@@ -864,34 +722,8 @@ class Firebase {
 
   //<-----------------------FUNCTIONS FOR TRAINING GROUPS (START)----------------------->//
 
-  // addTrainingGroup(payload, coachId, membersId, members) {
 
-  //   this.fireDB.collection("training-groups").add(payload)
-  //     .then((docRef) => {
-  //       //adding new group shortcut to coach (can be done using firebase functions)
-  //       this.addTrainingGroupToCoach({ name: payload.name, dateCreated: payload.dateCreated, isPrivate: payload.isPrivate, members: membersId }, coachId, docRef.id)
-  //       this.addMembersToTrainingGroup(docRef.id, members)
-  //     })
-  // }
-
-  //only for owners
-  updateTrainingGroupInfo(updates, groupId) {
-    this.fireDB.collection("training-groups").doc(groupId).update(updates).catch(err => console.log(err))
-  }
-
-  getUserProfilePhotoURL(members, setMemberPhotoURLS) {
-    let memberIds = members.map(member => { return member.uid })
-    console.log("memberIds")
-    console.log(members)
-    this.fireDB.collection("users").where(firebase.firestore.FieldPath.documentId(), "in", memberIds).get().then(snapshot => {
-      let members = []
-      snapshot.forEach((member) => {
-        members.push(member.get("photoURL"))
-      })
-      setMemberPhotoURLS(members)
-    })
-  }
-
+  //method for fetching members and owners of a training group
   getAllMembersInTrainingGroup(groupId, setMembers, setOwners) {
     this.fireDB.collection("training-groups").doc(groupId).collection("members")
       .onSnapshot((snapshot) => {
@@ -900,13 +732,13 @@ class Firebase {
         snapshot.forEach((member, index) => {
           let memberItem = member.data()
           memberItem.uid = member.id
-          
-          if(memberItem.role==="owner"){
+
+          if (memberItem.role === "owner") {
             owners.push(memberItem)
-          }else{
+          } else {
             members.push(memberItem)
           }
-          
+
         })
         setMembers(members)
         setOwners(owners)
@@ -926,11 +758,6 @@ class Firebase {
       });
   }
 
-  //function for applying to private training groups
-  applyToTrainingGroup(groupId, userId, user) {
-    this.fireDB.collection("training-groups").doc(groupId).collection("applicants").doc(userId).set(user).catch(err => console.log(err))
-  }
-
 
   getAllApplicantsFromTrainingGroup(groupId, setRequests) {
     return this.fireDB.collection("training-groups").doc(groupId).collection("applicants").orderBy("applicationDate", "desc")
@@ -941,10 +768,6 @@ class Firebase {
         })
         setRequests(res)
       })
-  }
-
-  removeApplicantFromTrainingGroup(groupId, userId) {
-    this.fireDB.collection("training-groups").doc(groupId).collection("applicants").doc(userId).delete().catch(err => console.log(err))
   }
 
   getOwnerTrainingGroups(coachId, setGroups) {
@@ -960,7 +783,7 @@ class Firebase {
       });
   }
 
-  getAllPublicTrainingGroups(setPublicGroups) {
+  getAllTrainingGroups(setPublicGroups) {
     return this.fireDB.collection("training-groups").onSnapshot(snapshot => {
       let groups = []
       snapshot.forEach((group, index) => {
@@ -1030,54 +853,6 @@ class Firebase {
         }
         setPlanInfo(snapshot.data())
       })
-  }
-
-  //function for creating the workout plan in the training group
-  createWorkoutPlan(group, workoutPlan) {
-    const doc = group.isPrivate ? "private" : "public"
-    return this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").add(workoutPlan).then(docRef => {
-      return docRef.id
-    })
-  }
-
-  deleteRecipientFromTrainingPlan(group, planId, recipientId) {
-    const doc = group.isPrivate ? "private" : "public"
-    return this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update({ recipients: firebase.firestore.FieldValue.arrayRemove(recipientId) })
-  }
-
-  addRecipientFromTrainingPlan(group, planId, recipientId) {
-    const doc = group.isPrivate ? "private" : "public"
-    return this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update({ recipients: firebase.firestore.FieldValue.arrayUnion(recipientId) })
-  }
-
-  updateWorkoutPlan(group, planId, updates) {
-    const doc = group.isPrivate ? "private" : "public"
-    this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update(updates).catch(err => console.log(err))
-  }
-
-  createDayWorkout(group, planId, workout) {
-    const doc = group.isPrivate ? "private" : "public"
-    this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").add(workout)
-      .then((docRef) => {
-        console.log("The workout has been successfuly added!")
-        let shortcut = {
-          title: workout.title,
-          dateStr: workout.dateStr
-        }
-        this.createDayWorkoutShortcut(group, planId, shortcut, docRef.id)
-      })
-      .catch(err => console.log(err))
-  }
-
-  createDayWorkoutShortcut(group, planId, shortcut, workoutId) {
-    const doc = group.isPrivate ? "private" : "public"
-    this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).set(shortcut).then(() => console.log("The workout shortcut has been successfuly added!")).catch(err => console.log(err))
-  }
-
-  //function for deleting the workout plan from the training group
-  deleteWorkoutPlanFromTrainingGroup(group, planId) {
-    const doc = group.isPrivate ? "private" : "public"
-    this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).delete().then(() => console.log("The workout plan has been successfuly deleted!")).catch(err => console.log(err))
   }
 
   getDayWorkoutShortcutsFromPlan(group, planId, setDayWorkoutShortcuts) {
@@ -1184,7 +959,7 @@ class Firebase {
 
 
   addMessageToChat(sender, text, chatId) {
-    
+
     this.fireDB.collection("chat-groups").doc(chatId).collection("messages").add({
       senderId: sender.uid,
       senderName: sender.name,
@@ -1240,12 +1015,12 @@ class Firebase {
   }
   //<-----------------------FUNCTIONS FOR CHAT (END)----------------------->//
 
-  generateSalt(length){
+  generateSalt(length) {
     const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     const salt = []
-    for(let i=0; i < length; i++){
+    for (let i = 0; i < length; i++) {
       console.log()
-      let index = Math.floor(Math.random()*(alphabet.length-1))
+      let index = Math.floor(Math.random() * (alphabet.length - 1))
       const char = alphabet[index]
       salt.push(char)
     }
@@ -1254,6 +1029,7 @@ class Firebase {
 
   }
 
+  //function for uploading posts photos to the storage
   async uploadPostImagesToGroup(group, files, caption) {
     let url_list = []
     const promises = [];
@@ -1261,12 +1037,12 @@ class Firebase {
     Array.from(files).forEach((file, index) => {
       const NewUploadPromise = new Promise((resolve, reject) => {
 
-        const fileName = this.generateSalt(4)+Date.now()+".jpg"
+        const fileName = this.generateSalt(4) + Date.now() + ".jpg"
         console.log(file)
-        const uploadTask = this.storage.ref("/training-group-posts/"+group.id + `/${fileName}`).put(file)
+        const uploadTask = this.storage.ref("/training-group-posts/" + group.id + `/${fileName}`).put(file)
         return uploadTask.on("state_changed",
           snapshot => {
-  
+
           },
           error => {
             //errror function
@@ -1279,56 +1055,204 @@ class Firebase {
               //url_list.push(url)
               resolve(url)
             })
-            
+
           }
         )
-
       })
       promises.push(NewUploadPromise)
-
-      
-
-
     })
 
-    
+
     //add posts to firebase firestore
-    
-
     Promise.all(promises)
-       .then(async () => {
-          let urls = []
-          console.log(promises)
-          promises.forEach(async (promise) => {
-            urls.push(await promise)
-          })
-         
-
-         return await urls
-       }).then(urls => {
-          const newPost = {
-            caption: caption,
-            photos: urls,
-            dateCreated: Date.now()
-          }
-          console.log(newPost)
-          this.addNewPostToTrainingGroup(group, newPost)
-       })
-       .catch(err => console.log(err.code));
-    //console.log(newPost)
-    //await 
+      .then(async () => {
+        let urls = []
+        console.log(promises)
+        promises.forEach(async (promise) => {
+          urls.push(await promise)
+        })
 
 
+        return await urls
+      }).then(urls => {
+        this.addNewPostToTrainingGroup(group, urls, caption)
+      })
+      .catch(err => console.log(err.code));
   }
 
-  addNewPostToTrainingGroup(group, post){
-    const doc = group.isPrivate ? "private" : "public"
-    this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("posts").add(post)
-    .catch(err => console.log(err))
-  }
+  //<-----------------------FUNCTIONS FOR NOTIFICATIONS (START)----------------------->//  P.S. -> NOT WORKING YET!
+  // loadNotifications(loadNotificationsToRedux) {
+  //   console.log("Running firebase.loadNotifications!")
+  //   console.log(this.getCurrentUserId())
+  //   var starCountRef = this.db.ref("/" + this.getCurrentUserId() + "/notifications/").orderByKey().limitToLast(100);
+
+  //   starCountRef.on('value', function (snapshot) {
+  //     var notificationItems = [] //local temp variable
+  //     var identificators = snapshot.val() ? Object.keys(snapshot.val()) : null
+
+  //     var i = 0;
+
+  //     snapshot.forEach(function (snapItem) {
+  //       var item = snapItem.val()
+  //       item.id = identificators[i]
+
+  //       notificationItems.push(item)
+  //       i++
+  //     });
+
+  //     console.log(notificationItems)
 
 
 
+  //     //goalCategories = Array.from(new Set(goalCategories))
+  //     //load json of all photos from database into redux state
+  //     loadNotificationsToRedux(notificationItems)
+  //   });
+  // }
+
+  // removeNotification(notificationId, type) {
+  //   if (type !== "VERIFICATION") {
+  //     try {
+  //       this.db.ref(this.getCurrentUserId() + "/notifications/" + notificationId).remove()
+  //     } catch (err) {
+  //       alert(err.message)
+  //     }
+  //   }
+  // }
+
+  //function for checking if the user has verified his email
+  // checkUser(id, type) {
+  //   if (this.auth.currentUser.emailVerified && type == "VERIFICATION") {
+  //     this.removeNotification(id, "VERIFIED")
+  //   }
+  // }
+
+  //<-----------------------FUNCTIONS FOR NOTIFICATIONS (END)----------------------->//
+
+  //<-----------------------FUNCTIONS FOR GOAL TRACKER (START)----------------------->//
+  // loadUserGoals(loadGoalItems, loadCategories) {
+  //   var starCountRef = this.db.ref(this.getCurrentUserId() + "/goals/").orderByKey();
+  //   starCountRef.on('value', function (snapshot) {
+  //     var goalItems = [] //local temp variable
+  //     var goalCategories = {}
+  //     var identificators = snapshot.val() ? Object.keys(snapshot.val()) : null
+  //     var i = 0
+
+  //     snapshot.forEach(function (snapItem) {
+  //       const item = snapItem.val();
+  //       item.id = identificators[i]
+  //       goalItems.push(item)
+
+  //       if (goalCategories[item.category] === undefined) {
+  //         goalCategories[item.category] = { count: 0, completedCount: 0 }
+  //       }
+  //       if (item.isCompleted) {
+  //         goalCategories[item.category].completedCount++
+  //       }
+  //       goalCategories[item.category].count++
+
+  //       i++
+  //     });
+
+  //     //goalCategories = Array.from(new Set(goalCategories))
+  //     //load json of all photos from database into redux state
+  //     loadGoalItems(goalItems)
+  //     loadCategories(goalCategories)
+  //   });
+  // }
+
+  // addNewGoal(props) {
+  //   //console.log(props)
+  //   try {
+  //     const id = this.db.ref(this.getCurrentUserId() + "/goals").push({
+  //       name: props.name,
+  //       category: props.category,
+  //       type: props.type,
+  //       units: props.units,
+  //       targetValue: props.targetValue,
+  //       startValue: props.startValue,
+  //       currentValue: props.startValue,
+  //       deadline: props.deadline,
+  //       description: props.description,
+  //       dateCreated: Date.now(),
+  //       isCompleted: false,
+  //       isArchieved: false,
+  //       startRepsValue: props.startRepsValue,
+  //       targetRepsValue: props.targetRepsValue,
+  //       currentRepsValue: props.startRepsValue
+  //     });
+
+  //     //this.quickResultUpdate(props.startValue, id.key)
+  //   } catch (err) {
+  //     alert(err.message)
+  //   }
+
+  // }
+
+  // completeGoal(id) {
+  //   try {
+  //     this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
+  //       isCompleted: true
+  //     });
+  //   } catch (err) {
+  //     alert(err.message)
+  //   }
+  // }
+
+  // uncompleteGoal(id) {
+  //   try {
+  //     this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
+  //       isCompleted: false
+  //     });
+  //   } catch (err) {
+  //     alert(err.message)
+  //   }
+  // }
+
+  // quickResultUpdate(result, currentRepsValue, id) {
+  //   console.log("Updating the goal through the quick update modal")
+  //   console.log(result, currentRepsValue, id)
+  //   try {
+  //     this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
+  //       currentValue: result,
+  //       currentRepsValue: currentRepsValue ? currentRepsValue : null
+  //     });
+
+  //   } catch (err) {
+  //     alert(err.message)
+  //   }
+  // }
+
+  // updateGoal(goal) {
+  //   console.log(goal)
+  //   try {
+  //     this.db.ref(this.getCurrentUserId() + "/goals/" + goal.id).update({
+  //       name: goal.name,
+  //       category: goal.category,
+  //       type: goal.type,
+  //       units: goal.units,
+  //       targetValue: goal.targetValue,
+  //       currentValue: goal.startValue,
+  //       deadline: goal.deadline,
+  //       description: goal.description,
+  //       targetRepsValue: goal.targetRepsValue ? goal.targetRepsValue : null,
+  //       currentRepsValue: goal.startRepsValue ? goal.startRepsValue : null
+  //     });
+  //     //this.quickResultUpdate(goal.startValue, goal.currentRepsValue, goal.id) //push currentValue to goal stats
+  //   } catch (err) {
+  //     alert(err.message)
+  //   }
+  // }
+
+  // deleteGoal(goalId) {
+  //   try {
+  //     this.db.ref(this.getCurrentUserId() + "/goals/" + goalId).remove()
+  //   } catch (err) {
+  //     alert(err.message)
+  //   }
+  // }
+
+  //<-----------------------FUNCTIONS FOR GOAL TRACKER (END)----------------------->// P.S. -> NOT WORKING YET!
 
 }
 

@@ -13,7 +13,6 @@ import GroupDialog from "./trainingGroupDialog"
 import AllTrainingGroupsComponent from "./allTrainingGroupsComponent"
 
 function GroupGrid(props) {
-    console.log(props.user)
 
     function handleOpenGroup(groupId) {
         props.goToPage("/training-groups/groupId=" + groupId)
@@ -25,7 +24,6 @@ function GroupGrid(props) {
                 <Paper style={{ height: "100%", padding: 10 }}>
                     <h1 style={{ margin: 0, textAlign: "center" }}>{group.name}</h1>
                     <p>Status: {group.isPrivate ? "Private" : "Public"}</p>
-                    <p>{group.groupId}</p>
                     <p>Members: {group.members ? group.members.length : 0}</p>
                     <Button onClick={() => handleOpenGroup(group.groupId)}>Open</Button>
                 </Paper>
@@ -44,6 +42,7 @@ function GroupGrid(props) {
 function TrainingGroupsComponent(props) {
     //state for all workouts
     const [groups, setGroups] = useState([])
+    const [groupsAsOwner, setGroupsAsOwner] = useState([])
     const [allPublicGroups, setAllPublicGroups] = useState([])
 
     //dialog state
@@ -53,16 +52,21 @@ function TrainingGroupsComponent(props) {
 
     //fetch all groups in this useEffect
     useEffect(() => {
-        console.log(props.user)
 
-        //fetch all the groups from the database
-        if (props.user.claims && props.user.claims.role == "COACH") {
-            return firebase.getOwnerTrainingGroups(props.user.uid, setGroups)
-        } else if (props.user.claims && props.user.claims.role == "SPORTSMAN") {
+        if(props.user?.uid){
             return firebase.getUserTrainingGroups(props.user.uid, setGroups)
         }
+        
 
-        //firebase.getWorkouts(props.user.uid, date, setGroups)
+    }, [props.user.uid])
+
+    useEffect(() => {
+
+        if(props.user?.uid){
+            return firebase.getOwnerTrainingGroups(props.user.uid, setGroupsAsOwner)
+        }
+        
+
     }, [props.user.uid])
 
     
@@ -77,10 +81,12 @@ function TrainingGroupsComponent(props) {
                 <AddIcon />
             </Fab>
 
+            <h1>My own training groups:</h1>
+            <GroupGrid groups={groupsAsOwner} goToPage={props.history.push} user={{ uid: props.user.uid }} />
 
 
-            <h1>My training groups:</h1>
-            <GroupGrid groups={groups} goToPage={props.history.push} user={{ role: props.user.claims && props.user.claims.role, uid: props.user.uid }} />
+            <h1>All my training groups:</h1>
+            <GroupGrid groups={groups} goToPage={props.history.push} user={{ uid: props.user.uid }} />
 
             <br />
 

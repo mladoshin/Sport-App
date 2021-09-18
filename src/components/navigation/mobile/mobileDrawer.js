@@ -20,7 +20,7 @@ export default function MobileDrawer({ open, setOpen, menuItems, goToPage, handl
                 {menuItems.map((menuItem, index) => {
                     return (
                         <ListItem button key={index} onClick={() => handleMenuButtonClick(menuItem.path)}>
-                            <ListItemIcon><MailIcon /></ListItemIcon>
+                            <ListItemIcon>{menuItem.icon && <menuItem.icon/>}</ListItemIcon>
                             <ListItemText>{menuItem.title}</ListItemText>
                         </ListItem>
                     )

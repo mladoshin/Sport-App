@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useState } from "react"
 import { connect } from "react-redux"
-import { Container, Paper, CssBaseline, ListItemSecondaryAction, FormControl, MenuItem, ListItemText, Checkbox, InputLabel, Input, Select, Dialog, AppBar, Toolbar, IconButton, Switch, Button, Grid, Card, Avatar, TextField, List, ListItem, ListItemAvatar } from '@material-ui/core'
+import { Container, Paper, FormControlLabel, ListItemSecondaryAction, FormControl, MenuItem, ListItemText, Checkbox, InputLabel, Input, Select, Dialog, AppBar, Toolbar, IconButton, Switch, Button, Avatar, TextField, List, ListItem, ListItemAvatar } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
 import firebase from '../../firebase/firebase';
@@ -34,27 +34,51 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
+
+function UserItem({ type, member, handleRemoveUser }) {
+    return (
+        <ListItem style={{ padding: 10, borderBottom: "1px solid black" }}>
+            <ListItemAvatar>
+                <Avatar src={member.photoURL} />
+            </ListItemAvatar>
+            <ListItemText>
+                <h3>User Name: {member.name + " " + member.surname}</h3>
+                <p>Role: {member.role}</p>
+            </ListItemText>
+            {type !== "owners" &&
+                <ListItemSecondaryAction>
+                    <IconButton edge="end" color="secondary" aria-label="delete" onClick={() => handleRemoveUser(member.uid)}>
+                        <DeleteIcon />
+                    </IconButton>
+                </ListItemSecondaryAction>
+            }
+
+        </ListItem>
+    )
+}
 //dialog form
 function DialogForm(props) {
     console.log(props)
     const classes = useStyles();
     const [email, setEmail] = useState("")
-    //const [selectedMemberIDs, setSelectedMemberIDs] = useState(props.payload.members ? props.payload.members : [])
 
     const selectedMemberIDs = props.memberIds
     const setSelectedMemberIDs = props.setMemberIds
 
     const [members, setMembers] = useState([])
+    const [owners, setOwners] = useState([])
     const [requests, setRequests] = useState([])
     const allAthletes = props.allAthletes
 
     console.log(members)
 
     useEffect(() => {
-        return firebase.getAllMembersInTrainingGroup(props.payload.id, setMembers)
+        //fetch all members and owners of the group
+        return firebase.getAllMembersInTrainingGroup(props.payload.id, setMembers, setOwners)
     }, [])
 
-    useEffect(()=>{
+    useEffect(() => {
+        //fetch all requests in training group
         return firebase.getAllApplicantsFromTrainingGroup(props.payload.id, setRequests)
     }, [])
 
@@ -79,52 +103,44 @@ function DialogForm(props) {
         return val.join(",")
     }
 
-    function handleAddUser(){
+    //function for adding new members
+    function handleAddUser() {
         console.log(props)
         const memberId = email
         firebase.addMembersToTrainingGroup([memberId], props.payload.id)
-        // firebase.getUserByEmail(email).then(user => {
-        //     console.log(user)
-        //     const memberId = user.data.uid
-        //     console.log("New member with id: "+memberId)
-        //     //firebase.addMembersToTrainingGroup([memberId], props.open.payload.id)
-        // }).catch(err => console.log(err))
-        
     }
 
-    function handleRemoveUser(uid){
-        alert("Deleting user with id: "+uid)
+    //function for removing members from the training group
+    function handleRemoveUser(uid) {
+        alert("Deleting user with id: " + uid)
         //firebase.removeMemberFromTrainingGroup(props.payload.id, [uid])
         firebase.removeMembersFromTrainingGroup([uid], props.payload.id)
     }
 
-    function handleAcceptRequest(applicant){
-        let role = "SPORTSMAN"
-        let newMember = {
-            id: applicant.uid,
-            name: applicant.name,
-            surname: applicant.surname,
-            photoURL: applicant.photoURL,
-            role: role,
-            dateJoined: Date.now()
-        }
-        console.log(newMember)
-        
-        firebase.addMembersToTrainingGroup(props.payload.id, [newMember])
-        firebase.removeApplicantFromTrainingGroup(props.payload.id, newMember.id)
-    }
-
-    function handleRejectRequest(applicant){
+    //function for accepting the application request
+    function handleAcceptRequest(applicant) {
+        firebase.addMembersToTrainingGroup([applicant.uid], props.payload.id)
         firebase.removeApplicantFromTrainingGroup(props.payload.id, applicant.uid)
     }
 
+    // function for rejecting the application request
+    function handleRejectRequest(applicantId) {
+        firebase.removeApplicantFromTrainingGroup(applicantId, props.payload.id)
+    }
+
     return (
-        <div>
-            <Switch
-                checked={props.isPrivate}
-                onChange={props.handleChange}
-                name="checkedA"
-                inputProps={{ 'aria-label': 'secondary checkbox' }}
+        <div style={{ overflowY: "scroll", height: "80vh" }}>
+
+            <FormControlLabel
+                control={
+                    <Switch
+                        checked={props.isPrivate}
+                        onChange={props.handleChange}
+                        name="checkedA"
+                        inputProps={{ 'aria-label': 'secondary checkbox' }}
+                    />
+                }
+                label="Private group"
             />
             <hr />
 
@@ -163,20 +179,17 @@ function DialogForm(props) {
                         {members.map((member, i) => {
 
                             return (
-                                <ListItem style={{ padding: 10, borderBottom: "1px solid black" }}>
-                                    <ListItemAvatar>
-                                        <Avatar src={member.photoURL}/>
-                                    </ListItemAvatar>
-                                    <ListItemText>
-                                        <h3>User Name: {member.name + " " +member.surname}</h3>
-                                        <p>Role: {member.role}</p>
-                                    </ListItemText>
-                                    <ListItemSecondaryAction>
-                                        <IconButton edge="end" color="secondary" aria-label="delete" onClick={()=>handleRemoveUser(member.uid)}>
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
+                                <UserItem member={member} handleRemoveUser={handleRemoveUser} />
+                            )
+                        })}
+                    </List>
+
+                    <h1>Owner list</h1>
+                    <List>
+                        {owners.map((owner, i) => {
+
+                            return (
+                                <UserItem member={owner} handleRemoveUser={handleRemoveUser} type="owners" />
                             )
                         })}
                     </List>
@@ -191,15 +204,15 @@ function DialogForm(props) {
                             return (
                                 <ListItem style={{ padding: 10, borderBottom: "1px solid black" }} key={i}>
                                     <ListItemAvatar>
-                                        <Avatar src={applicant.photoURL}/>
+                                        <Avatar src={applicant.photoURL} />
                                     </ListItemAvatar>
                                     <ListItemText>
-                                        <h3>User Name: {applicant.name + " " +applicant.surname}</h3>
-                                        
+                                        <h3>User Name: {applicant.name + " " + applicant.surname}</h3>
+
                                     </ListItemText>
                                     <ListItemSecondaryAction>
-                                        <Button color="secondary" onClick={()=>handleRejectRequest(applicant)}>Reject</Button>
-                                        <Button onClick={()=>handleAcceptRequest(applicant)}>Accept</Button>
+                                        <Button color="secondary" onClick={() => handleRejectRequest(applicant.uid)}>Reject</Button>
+                                        <Button onClick={() => handleAcceptRequest(applicant)}>Accept</Button>
                                     </ListItemSecondaryAction>
                                 </ListItem>
                             )

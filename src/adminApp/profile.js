@@ -4,7 +4,7 @@ import { connect } from "react-redux"
 import { Container, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
-import firebase from '../../firebase/firebase';
+import firebase from '../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 

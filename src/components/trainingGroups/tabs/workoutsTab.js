@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
-import WorkoutComponent from "../../workoutBuilder/App"
-import TodoCalendar from "../../dailyTodos/App"
+import WorkoutComponent from "../../../components/workoutBuilder/App"
+import TodoCalendar from "../../../components/dailyTodos/App"
 import { Button, Grid, List, ListItem, ListItemSecondaryAction, Paper } from "@material-ui/core"
 import { Container, CssBaseline, Tooltip, FormControlLabel, FormControl, MenuItem, ListItemText, Checkbox, InputLabel, Input, Select, Dialog, AppBar, Toolbar, IconButton, Switch, Avatar, TextField } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close';
@@ -72,11 +72,15 @@ function TrainingPlanDialog(props) {
 
         console.log(recipientIds)
 
+        const workoutPlan = {
+            name: title, 
+            description: description,
+            recipients: recipientIds
+        }
+
         if (title && description) {
-            firebase.createWorkoutPlan(props.group, { name: title, description: description, dateCreated: Date.now(), recipients: recipientIds }).then(id => {
-                console.log("New workout plan has been created! Its id = " + id)
-                handleClose()
-            })
+            firebase.createWorkoutPlan(props.group, workoutPlan)
+            handleClose()
         }
 
     }
@@ -122,7 +126,7 @@ function TrainingPlanDialog(props) {
         function handleAddRecipient(id){
             //setRecipients([...recipients, id])
             //console.log(props.open.payload.planId)
-            firebase.addRecipientFromTrainingPlan(props.group, props.open.payload.planId, id)
+            firebase.addRecipientToTrainingPlan(props.group, props.open.payload.planId, id)
             setId("")
         }
 
@@ -140,7 +144,8 @@ function TrainingPlanDialog(props) {
                             <TextField variant="outlined" label="Member email:" value={id} onChange={(e) => setId(e.target.value)} />
                             <Button onClick={() => handleAddRecipient(id)}>Add</Button>
                             <List style={{width: "40%"}}>
-                                {recipients.map((recipient, i) => {
+                                {recipients?.map((recipient, i) => {
+                                    console.log(recipient)
                                     return (
                                         <ListItem key={i} style={{backgroundColor: "grey", marginBottom: 10}}>
                                             <ListItemText>
@@ -287,17 +292,7 @@ function MemberContent(props) {
 
 
 function WorkoutsTab(props) {
-
-
-
     const { groupId } = useParams()
-
-
-
-
-
-
-
 
     return (
         <div style={{ padding: 15 }}>

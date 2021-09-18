@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { withRouter } from 'react-router-dom';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { Button, Drawer, AppBar, Toolbar, List, Divider, ListItem, ListItemIcon, Avatar, IconButton, ListItemText } from '@material-ui/core'
-
+import CustomAvatar from "../../common/avatar"
 // importing icons
 import NotificationsRoundedIcon from '@material-ui/icons/NotificationsRounded';
 
@@ -54,9 +54,7 @@ export default function DesktopAppBar({ open, user, openProfile, goToPage }) {
                     {user.uid ?
                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                             <IconButton><NotificationsRoundedIcon /></IconButton>
-                            <Suspense fallback={null}>
-                                <IconButton onClick={() => openProfile()}><Avatar alt="User" src={user.photoURL} className={classes.avatar}>{user.name}</Avatar></IconButton>
-                            </Suspense>
+                            <CustomAvatar user={user} style={{width: 30, height: 30}}/>
                         </div>
                         :
                         <Button color="inherit" onClick={() => goToPage("/login")}>Login</Button>

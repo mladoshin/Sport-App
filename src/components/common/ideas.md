@@ -1,0 +1,1 @@
+[] - make avatar component with the link to the user's profile

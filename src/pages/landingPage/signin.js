@@ -60,19 +60,16 @@ function SignInPage(props) {
     firebase.auth.currentUser.getIdTokenResult()
       .then((idTokenResult) => {
         //display the custom claim
-        console.log(idTokenResult.claims.role)
 
         if(email=="admin@admin.com"){
           console.log("Welcome Admin!")
         }
 
         //redirect to the app dashboard for both sportsman and coach
-        if (idTokenResult.claims.role=="COACH") {
-          props.history.replace("/coachApp/coachId=" + firebase.getCurrentUserId())
-        } else if(idTokenResult.claims.role=="SPORTSMAN") {
-          props.history.replace("/sportsmanApp/userId=" + firebase.getCurrentUserId())
-        }else if(idTokenResult.claims.role=="ADMIN"){
+        if(idTokenResult.claims.role=="ADMIN"){
           props.history.replace("/adminApp")
+        }else{
+          props.history.replace("/home")
         }
 
       })

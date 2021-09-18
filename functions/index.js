@@ -74,7 +74,7 @@ exports.getUserGeolocation = functions.https.onCall((data, context) => {
     })
 })
 
-function getUsersDataByIds(userIds){
+function getUsersDataByIds(userIds) {
     let promises = []
     userIds.forEach(id => {
         const promise = new Promise((resolve, reject) => {
@@ -90,10 +90,10 @@ function getUsersDataByIds(userIds){
     return Promise.all(promises)
 }
 
-function prepareMembersData(data, ownerId, groupId){
+function prepareMembersData(data, ownerId, groupId) {
     data.forEach(member => {
         let role = "member"
-        if(member.uid === ownerId){
+        if (member.uid === ownerId) {
             role = "owner"
         }
 
@@ -143,7 +143,7 @@ exports.addMembersToTrainingGroup = functions.https.onCall((data, context) => {
             members: admin.firestore.FieldValue.arrayUnion(id)
         })
     })
-    
+
 
     getUsersDataByIds(memberIds).then(res => {
         prepareMembersData(res, ownerId, groupId)
@@ -161,8 +161,230 @@ exports.removeMembersFromTrainingGroup = functions.https.onCall((data, context) 
 
         admin.firestore().collection("training-groups").doc(groupId).collection("members").doc(id).delete()
     })
+
+})
+
+function isAlreadySubscribed(groupId, uid) {
+    return new Promise((resolve, reject) => {
+        admin.firestore().collection("training-groups").doc(groupId).get().then(snap => {
+            const members = snap.data().members
+            const ownerId = snap.data().owner
+
+            //reject if the user is group's Owner
+            if (ownerId === uid) {
+                reject("Error")
+            }
+
+            if (members.indexOf(uid) !== -1) {
+                resolve(true)
+            } else {
+                resolve(false)
+            }
+
+
+        }).catch(err => reject(err))
+    })
+}
+
+function isGroupOwner(groupId, uid) {
+    return new Promise((resolve, reject) => {
+        admin.firestore().collection("training-groups").doc(groupId).get().then(snap => {
+            const ownerId = snap.data().owner
+
+            if (uid === ownerId) {
+                resolve(true)
+            } else {
+                resolve(false)
+            }
+
+        }).catch(err => reject(err))
+    })
+}
+
+exports.subscribeToTrainingGroup = functions.https.onCall((data, context) => {
+    const groupId = data.groupId
+    const groupOwnerId = data.groupOwnerId
+    const userId = context.auth.uid
+    isAlreadySubscribed(groupId, userId).then(isSubscribed => {
+        //if the user is not subscribed then subscribe him
+        if (!isSubscribed) {
+            admin.firestore().collection("training-groups").doc(groupId).update({
+                members: admin.firestore.FieldValue.arrayUnion(userId)
+            })
+
+            getUsersDataByIds([userId]).then(res => {
+                prepareMembersData(res, groupOwnerId, groupId)
+            })
+        }
+    })
+
+
+})
+
+exports.unsubscribeFromTrainingGroup = functions.https.onCall((data, context) => {
+    const groupId = data.groupId
+    const userId = context.auth.uid
+    isAlreadySubscribed(groupId, userId).then(isSubscribed => {
+        if (isSubscribed) {
+            admin.firestore().collection("training-groups").doc(groupId).update({
+                members: admin.firestore.FieldValue.arrayRemove(userId)
+            })
+
+            admin.firestore().collection("training-groups").doc(groupId).collection("members").doc(userId).delete()
+        }
+    })
+})
+
+exports.applyToTrainingGroup = functions.https.onCall((data, context) => {
+    const userId = context.auth.uid
+    const groupId = data.groupId
+    const applicationMessage = data.message
+
+    getUsersDataByIds([userId]).then(res => {
+        const user = res[0]
+        if(!user){
+            return
+        }
+        
+        let applicant = {
+            name: user.name,
+            surname: user.surname,
+            photoURL: user.photoURL,
+            applicationDate: admin.firestore.FieldValue.serverTimestamp(),
+            message: applicationMessage
+        }
+        admin.firestore().collection("training-groups").doc(groupId).collection("applicants").doc(userId).set(applicant).catch(err => console.log(err))
+    })
+})
+
+exports.removeApplicantFromTrainingGroup = functions.https.onCall((data, context) => {
+    const userId = data.uid
+    const groupId = data.groupId
+
+    admin.firestore().collection("training-groups").doc(groupId).collection("applicants").doc(userId).delete().catch(err => console.log(err))
+})
+
+exports.updateTrainingGroupInfo = functions.https.onCall((data, context) => {
+    const groupId = data.groupId
+    const updates = data.updates
+    const userId = context.auth.uid
+    
+    if(!groupId || !userId || !updates){
+        return
+    }
+
+    isGroupOwner(groupId, userId).then(isOwner => {
+        if(isOwner && updates){
+            admin.firestore().collection("training-groups").doc(groupId).update(updates).catch(err => console.log(err))
+        }
+    })
     
 })
+
+
+
+exports.addNewPostToTrainingGroup = functions.https.onCall((data, context) => {
+    const group = data.group
+    const urls = data.urls
+    const caption = data.caption
+    const userId = context.auth.uid
+
+    const post = {
+        caption: caption,
+        photos: urls,
+        dateCreated: admin.firestore.FieldValue.serverTimestamp()
+      }
+
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("posts").add(post)
+    .catch(err => console.log(err))
+
+    
+})
+
+exports.deleteWorkoutPlanFromTrainingGroup = functions.https.onCall((data, context) => {
+    const group = data.group
+    const planId = data.planId
+
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).delete().catch(err => functions.logger.log(err))
+})
+
+exports.createWorkoutPlan = functions.https.onCall((data, context) => {
+    const group = data.group
+    const workoutPlan = {...data.workoutPlan, dateCreated: admin.firestore.FieldValue.serverTimestamp()}
+
+    const doc = group.isPrivate ? "private" : "public"
+    return admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").add(workoutPlan).catch(err => functions.logger.log(err))
+
+})
+
+exports.updateWorkoutPlan = functions.https.onCall((data, context) => {
+    const group = data.group
+    const planId = data.planId
+    const updates = data.updates
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update(updates).catch(err => functions.logger.log(err))
+})
+
+exports.addRecipientToTrainingPlan = functions.https.onCall((data, context) => {
+    const group = data.group
+    const planId = data.planId
+    const recipientId = data.recipientId
+
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update({ recipients: admin.firestore.FieldValue.arrayUnion(recipientId) })
+})
+
+exports.deleteRecipientFromTrainingPlan = functions.https.onCall((data, context) => {
+    const group = data.group
+    const planId = data.planId
+    const recipientId = data.recipientId
+
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).update({ recipients: admin.firestore.FieldValue.arrayRemove(recipientId) })
+})
+
+exports.createDayWorkout = functions.https.onCall((data, context) => {
+    const group = data.group
+    const planId = data.planId
+    const workout = {...data.workout, dateCreated: admin.firestore.FieldValue.serverTimestamp()}
+
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").add(workout)
+      .then((docRef) => {
+        let shortcut = {
+          title: workout.title,
+          dateStr: workout.dateStr
+        }
+        createDayWorkoutShortcut(group, planId, shortcut, docRef.id)
+      })
+      .catch(err => console.log(err))
+})
+
+function createDayWorkoutShortcut(group, planId, shortcut, workoutId) {
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).set(shortcut).catch(err => functions.logger(err))
+  }
+
+exports.deleteDayWorkout = functions.https.onCall((data, context) => {
+    const group = data.group
+    const planId = data.planId
+    const workoutId = data.workoutId
+    const doc = group.isPrivate ? "private" : "public"
+
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").doc(workoutId).delete()
+    .then(()=>{
+        deleteDayWorkoutShortcut(group, planId, workoutId)
+    })
+})
+
+function deleteDayWorkoutShortcut(group, planId, workoutId){
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).delete()
+}
+
+
 
 
 exports.getAllUsers = functions.https.onCall((data, context) => {

@@ -10,8 +10,8 @@ import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
 import MuiDialogActions from '@material-ui/core/DialogActions';
 
-import WorkoutComponent from "../workoutBuilder/App"
-import Editor from "../notes/editor";
+import WorkoutComponent from "../../components/workoutBuilder/App"
+import Editor from "../../components/notes/editor";
 
 import firebase from "../../firebase/firebase"
 
@@ -90,7 +90,8 @@ function WorkoutPlanCalendarDialog(props) {
     //console.log(data)
 
     function handleDeleteWorkout() {
-
+        firebase.deleteDayWorkout(props.group, props.planId, content[0].workoutId)
+        handleClose()
     }
 
     function handleUpdateWorkout() {
@@ -114,7 +115,6 @@ function WorkoutPlanCalendarDialog(props) {
         let workout = {
             title: title,
             data: data,
-            dateCreated: Date.now(),
             dateStr: props.open.payload.dateStr
         }
         //console.log(props.planId)

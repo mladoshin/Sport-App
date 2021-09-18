@@ -69,14 +69,14 @@ function ProfilePage(props) {
                 <h1>Page for user {uid}</h1>
                 {!loading ? 
                     <center>
-                        <Avatar src={userInfo.photoURL} className={classes.avatar}/>
+                        <Avatar src={userInfo?.photoURL} className={classes.avatar}/>
                         <div style={{ textAlign: "left", width: 300}}>
-                            <h3>Role: {userInfo.role}</h3>
-                            <h3>Name: {userInfo.name}</h3>
-                            <h3>Surname: {userInfo.surname}</h3>
-                            <h3>Email: {userInfo.email}</h3>
+                            <h3>Role: {userInfo?.role}</h3>
+                            <h3>Name: {userInfo?.name}</h3>
+                            <h3>Surname: {userInfo?.surname}</h3>
+                            <h3>Email: {userInfo?.email}</h3>
                         </div>
-                        <Button color="primary" variant="contained" startIcon={<ChatBubbleRoundedIcon/>}>{"Message "+ userInfo.name }</Button>  
+                        <Button color="primary" variant="contained" startIcon={<ChatBubbleRoundedIcon/>}>{"Message "+ userInfo?.name }</Button>  
                     </center>
                 :
                     <Container>

@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import parse from 'html-react-parser';
 import firebase from '../../firebase/firebase';
 import isMessageALink from "../../utils/isMessageALink";
+import CustomAvatar from "../common/avatar"
 
 function Message(props){
     const message = props.message
@@ -37,7 +38,7 @@ function Message(props){
     return(
         <Grid key={index} item xs={12} style={{padding: 5, position: "relative", width: "100%"}}>
             <div className={props.isUser ? "message__wrapper_user" : "message__wrapper"}>
-                <Avatar src={message.senderPhotoURL} className={clsx("message__avatar_base", props.isUser && "message__avatar_user", !props.isUser && "message__avatar")}/>
+                <CustomAvatar user={{photoURL: message.senderPhotoURL, uid: message.senderId}} disableRipple btnStyle={{padding: 0, marginLeft: props.isUser && 10, marginRight: !props.isUser && 10}}/>
                 <Paper className={clsx("message__paper_base", props.isUser && "message__paper_user", !props.isUser && "message__paper")}>         
                     {text}
                 </Paper>

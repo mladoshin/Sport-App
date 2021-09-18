@@ -8,6 +8,9 @@ import ChatBubbleRoundedIcon from '@material-ui/icons/ChatBubbleRounded';
 import GroupRoundedIcon from '@material-ui/icons/GroupRounded';
 import CalendarTodayRoundedIcon from '@material-ui/icons/CalendarTodayRounded';
 
+import PersonRoundedIcon from '@material-ui/icons/PersonRounded';
+import ContactSupportRoundedIcon from '@material-ui/icons/ContactSupportRounded';
+import InfoRoundedIcon from '@material-ui/icons/InfoRounded';
 // Import a navbar for mobile devices
 import MobileNavbar from "./mobile/mobileNavbar"
 
@@ -40,10 +43,10 @@ const sportsmanMenu = [
 ]
 
 const homeMenuItems = [
-  {title: "Home", path: "/"},
-  {title: "About Us", path: "/aboutUs"},
-  {title: "Contacts", path: "/contacts"},
-  {title: "Login", path: "/login"},
+  {title: "Home", path: "/", icon: HomeRoundedIcon},
+  {title: "About Us", path: "/aboutUs", icon: InfoRoundedIcon},
+  {title: "Contacts", path: "/contacts", icon: ContactSupportRoundedIcon},
+  {title: "Login", path: "/login", icon: PersonRoundedIcon},
 ]
 
 function NavBar(props) {
@@ -53,7 +56,8 @@ function NavBar(props) {
 
   //setting the menu items according to the user's role
   useEffect(()=>{
-    if(props.user){
+    
+    if(props.user?.uid){
       setMenuItems(userMenu)
     }else{
       setMenuItems(homeMenuItems)

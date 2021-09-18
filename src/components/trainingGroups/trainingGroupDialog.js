@@ -103,7 +103,7 @@ function GroupDialog(props) {
         if(updates.name || updates.isPrivate !== undefined){
             console.log("updates:")
             console.log(updates)
-            firebase.updateTrainingGroupInfo(updates, props.open.payload.id)
+            firebase.updateTrainingGroupInfo(props.open.payload.id, updates)
         }
 
 

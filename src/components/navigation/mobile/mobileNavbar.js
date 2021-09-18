@@ -87,22 +87,13 @@ function MobileNavbar(props) {
     //function for opening the user's profile
     function openProfile() {
         let role = props.user.claims.role
-        
-        // if (role == "ADMIN") {
-        //     props.history.push("/adminApp/profile")
-        // } else if (role == "COACH") {
-        //     props.history.push("/coachApp/coachId=" + props.user.uid + "/profile")
-        // } else if (role == "SPORTSMAN") {
-        //     props.history.push("/sportsmanApp/userId=" + props.user.uid + "/profile")
-        // }
 
         if (role == "ADMIN") {
             props.history.push("/adminApp")
-        } else if (role == "COACH") {
-            props.history.push("/coachApp/coachId=" + props.user.uid)
-        } else if (role == "SPORTSMAN") {
-            props.history.push("/sportsmanApp/userId=" + props.user.uid)
+        } else{
+            props.history.push("/home")
         }
+
     }
 
     //function for redirecting to the right page, after user have clicked on the menu item
@@ -113,14 +104,7 @@ function MobileNavbar(props) {
         if (role == "ADMIN") {
             props.history.push("/adminApp" + destination)
             toggleDrawer(false)
-        } else if (role == "COACH") { 
-            props.history.push("/coachApp/coachId=" + props.user.uid + "" + destination)
-            toggleDrawer(false)
-        } else if (role == "SPORTSMAN") {      
-            props.history.push("/sportsmanApp/userId=" + props.user.uid + "" + destination)
-            toggleDrawer(false)
-        }else{
-            // if the user is not logged in
+        } else{    
             props.history.push(destination)
             toggleDrawer(false)
         }

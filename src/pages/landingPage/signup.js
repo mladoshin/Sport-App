@@ -49,46 +49,6 @@ function SignUpPage(props) {
     const [isCoach, setIsCoach] = useState(false)
     const [discipline, setDiscipline] = useState("")
 
-    const [
-        createUserWithEmailAndPassword,
-        user,
-        loading,
-        error,
-    ] = useCreateUserWithEmailAndPassword(firebase.auth);
-
-
-    // useEffect(() => {
-
-    //     console.log(user)
-
-    //     if (user) {
-
-    //         //update user's auth profile
-    //         firebase.auth.currentUser.updateProfile({
-    //             displayName: firstName + " " + lastName,
-    //             userEmail: email
-    //         })
-
-    //         //adding the coach role to custom claims if the user signed up for the coach account
-    //         if (isCoach && email !== "admin@admin.com") {
-    //             firebase.addCoachRole(email).then(res => console.log(res))
-    //         } else if (!isCoach) {
-    //             firebase.addSportsmanRole(email).then(res => console.log(res))
-    //         } else if (email == "admin@admin.com" && !isCoach) {
-    //             firebase.addAdminRole(email).then(res => console.log(res))
-    //         }
-
-    //         //set the session storage property Auth to true
-    //         sessionStorage.setItem("Auth", true)
-    //         alert("You have successfully registered! Congrats!")
-
-    //         //Write to database
-    //         putUserDataToDB({ name: firstName, surname: lastName, email: email, isCoach: isCoach })
-    //     }
-
-    // }, [user])
-
-    console.log("isCoach = " + isCoach)
 
     //function for clearing all the states after switching between coach signup and sportsman signup
     function clearState() {
@@ -135,7 +95,7 @@ function SignUpPage(props) {
         } else {
             //the user is already signed in
             alert("Sign out before creating new account!");
-            props.history.replace("/dashboard/userId=" + firebase.getCurrentUserId())
+            props.history.replace("/home")
         }
     }
 

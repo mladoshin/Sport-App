@@ -20,30 +20,7 @@ function NewsTab(props) {
         return firebase.getPostsFromTrainingGroup(props.group, setPosts)
     }, [])
 
-    function handleConvertImagesToBlob(){
-        var blobs = [];
-        [...photos].forEach((photo, i) => {
-            
-            Compress.imageFileResizer(
-                photo, // the file from input
-                1280, // width
-                720, // height
-                "JPEG", // compress format WEBP, JPEG, PNG
-                70, // quality
-                0, // rotation
-                (uri) => {
-                  console.log(uri);
-                  // You upload logic goes here
-                  blobs.push(uri)
-                },
-                "blob" // blob or base64 default base64
-              );
-              setPhotosBLOB(blobs)
-        })
-        
-    }
-
-
+    
     function handlePublishPost(caption){
         //1) upload the images and get the links into an array
         firebase.uploadPostImagesToGroup(props.group, photosBLOB, caption)

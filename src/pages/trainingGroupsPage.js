@@ -1,21 +1,22 @@
-//<-----------------------WORKOUTS PAGE (WORKOUT BUILDER)----------------------->//
+//<-----------------------TRAINING GROUPS PAGE (WORKOUT BUILDER)----------------------->//
 import React from "react"
 import { connect } from "react-redux"
 import { Container, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
-import firebase from '../../firebase/firebase';
+import firebase from '../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
 import AddIcon from '@material-ui/icons/Add';
+import TrainingGroupsComponent from "../components/trainingGroups/trainingGroups"
 
-import WorkoutComponent from "../workoutBuilder/App"
+import Paper from '@material-ui/core/Paper';
 
 //styles
 const useStyles = makeStyles((theme) => ({
     mainContainer: {
-        padding: "30px 0px 0px 0px"
+        height: "100%"
     },
     gridItem: {
         padding: "1em"
@@ -49,20 +50,29 @@ const useStyles = makeStyles((theme) => ({
     searchInput: {
         height: "45px",
         boxSizing: "border-box"
-    }
+    },
+    root: {
+        flexGrow: 1,
+    },
+    paper: {
+        padding: theme.spacing(1),
+        textAlign: 'center',
+        color: theme.palette.text.secondary,
+    },
 
 }));
 
 
-function WorkoutsPage(props) {
+function TrainingGroupsPage(props) {
     const classes = useStyles();
+
     return (
         <>
-            <Container className={classes.mainContainer}>
-                <h1>Workouts Page</h1>
+            <Container className={classes.mainContainer} maxWidth="xl">
+                <h1>Training groups Page</h1>
 
                 <div style={{ height: 45 }}>
-                    <TextField id="outlined-basic" label="Search for workouts" variant="outlined" style={{ height: "100%" }}
+                    <TextField id="outlined-basic" label="Search for training groups" variant="outlined" style={{ height: "100%" }}
                         inputProps={{
                             style: {
                                 height: 45,
@@ -86,13 +96,14 @@ function WorkoutsPage(props) {
                 </Button>
                 </div>
 
-                <WorkoutComponent/>
+                <TrainingGroupsComponent type={props.type}/>
+                
 
             </Container>
 
-            
+
         </>
     )
 }
 
-export default WorkoutsPage;
+export default TrainingGroupsPage;

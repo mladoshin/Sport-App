@@ -4,7 +4,7 @@ import { connect } from "react-redux"
 import { Container, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
 //import NavBar from "../../components/navigation/navbar"
 import { withRouter, useParams } from "react-router-dom";
-import firebase from '../../firebase/firebase';
+import firebase from '../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
 import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
@@ -12,12 +12,13 @@ import AddIcon from '@material-ui/icons/Add';
 
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
+import CustomAvatar from "../components/common/avatar"
 
 import Paper from '@material-ui/core/Paper';
-import GroupDialog from "./trainingGroupDialog"
-import NewsTab from "./tabs/newsTab";
-import WorkoutsTab from "./tabs/workoutsTab";
-import ChatTab from "./tabs/chatTab";
+import GroupDialog from "../components/trainingGroups/trainingGroupDialog"
+import NewsTab from "../components/trainingGroups/tabs/newsTab";
+import WorkoutsTab from "../components/trainingGroups/tabs/workoutsTab";
+import ChatTab from "../components/trainingGroups/tabs/chatTab";
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -201,7 +202,7 @@ function TrainingGroupPage(props) {
                         groupOwners.map(owner => {
                             return (
                                 <Grid item lg={1}>
-                                    <Avatar src={owner.photoURL} style={{ width: 40, height: 40, border: "2px solid grey" }} onClick={() => alert(owner.uid)} />
+                                   <CustomAvatar user={owner} disableRipple={true} style={{border: "2px solid grey"}}/>
                                 </Grid>
                             )
                         })
@@ -230,7 +231,8 @@ function TrainingGroupPage(props) {
 
                                 return (
                                     <Grid item lg={1}>
-                                        <Avatar src={member.photoURL} style={{ width: 40, height: 40, border: "2px solid grey" }} onClick={() => alert(member.uid)} />
+                                        <CustomAvatar user={member} disableRipple={true} style={{border: "2px solid grey"}}/>
+                            
                                     </Grid>
                                 )
                             })}
