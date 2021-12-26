@@ -1,42 +1,79 @@
 import React, { useState, useEffect } from "react"
 import { Paper, TextField, Typography, CssBaseline, Tooltip, Fab, Dialog, DialogActions, IconButton, Divider, Button, Grid, Card, Avatar } from '@material-ui/core'
 import { connect } from "react-redux"
+import CloseIcon from "@material-ui/icons/Close"
 import firebase from '../../firebase/firebase';
 import Message from "./message"
-import { useCollection } from 'react-firebase-hooks/firestore';
+import { withRouter } from "react-router";
 import getRecipient from "../../utils/getRecipient";
 import getSenderPhotoURL from "../../utils/getSenderPhotoURL";
+import CustomAvatar from "../common/avatar"
+import convertImagesToBlob from "../../utils/convertImagesToBlob";
+
+import MoreVertRoundedIcon from '@material-ui/icons/MoreVertRounded';
+import ChatInfoMenu from "./chatInfoMenu";
+import ChatHeader from "./chatHeader";
+
+
+function ChatAttachmentPreview({ attachments, clearFiles }) {
+    const open = Boolean(attachments.length > 0)
+    console.log(open)
+
+    return (
+        <>
+            {open &&
+                <Paper className="attachmentArea" square style={{ visibility: open ? "visible" : "hidden", position: "relative" }}>
+                    <IconButton style={{ position: "absolute", top: 10, right: 10 }} onClick={clearFiles}>
+                        <CloseIcon />
+                    </IconButton>
+                    <Grid container style={{ minHeight: "100%" }}>
+                        {Array.from(attachments)?.map((file, index) => {
+                            let url = URL.createObjectURL(file)
+                            return (
+                                <Grid item xs={6} md={4} lg={3} xl={2} style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                                    <Card style={{ height: 130, aspectRatio: "1/1", padding: 3, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+                                        <b style={{ position: "absolute" }}>{file.name}</b>
+                                        <img src={url} style={{ objectFit: "contain", height: "100%", }} />
+
+                                    </Card>
+
+                                </Grid>
+                            )
+                        })}
+                    </Grid>
+
+                </Paper>
+            }
+        </>
+
+    )
+}
 
 function Chat(props) {
     const chat = props.chat
-    const membersInfo = props.membersInfo
-    const [allMessages, loading, error] = useCollection(firebase.fireDB.collection("chat-groups").doc(chat?.chatId).collection("messages").orderBy("timestamp", "asc"))
+    const [allMessages, setAllMessages] = useState([])
     const [message, setMessage] = useState("")
-    const [chatName, setChatName] = useState("")
-    
-    const chatTitle = chat ? chat.title : null
+    const [files, setFiles] = useState([])
 
-    console.log(props)
     useEffect(() => {
         //useEffect for smooth scrolling to bottom
         scrollToBottom()
-
     }, [allMessages])
 
 
     useEffect(() => {
         if (chat && !chat.groupId) {
-            let recipients = getRecipient(chat.membersInfo, firebase.getCurrentUserId()).map(recipient => recipient.name+" "+recipient.surname)          
-            setChatName(recipients.join(","))
+            firebase.getChatMessages(chat.chatId, setAllMessages, chat.membersInfo)
+        } else if (chat && chat.groupId) {
+            firebase.getChatMessages(chat.chatId, setAllMessages, chat.membersInfo)
         }
 
         return () => {
             console.log("Cleanup")
             setMessage("")
-            //setAllMessages([])
         };
 
-    }, [chat])
+    }, [props.chat])
 
     function scrollToBottom() {
         let container = document.getElementById("chat-container");
@@ -55,9 +92,26 @@ function Chat(props) {
             uid: props.user.uid
         }
 
+        if (files.length > 0) {
+            //upload documents
+            convertImagesToBlob(files).then(res => {
+                console.log(res)
+                //upload images here
+                firebase.uploadFilesToChat(res, chat.chatId).then(urls => {
+                    //upload urls to the messages
+                    //console.log(urls)
+                    firebase.addMessageToChat(sender, message, chat.chatId, urls)
+                })
+            })
+            setMessage("")
+            return
+        }
+
         if (message && chat) {
             console.log(chat)
             firebase.addMessageToChat(sender, message, chat.chatId)
+
+
         }
         // clear the input field
         setMessage("")
@@ -65,57 +119,58 @@ function Chat(props) {
 
     const messagesList = (
         <Grid container spacing={0} style={{ overflowX: "hidden" }} id="chat-container">
-            {allMessages?.docs.map((doc, index) => {
-                let message = doc.data()
-                message.id = doc.id
+            {allMessages?.map((doc, index) => {
+                let message = doc
 
                 let isUser = props.user.uid === message.senderId
                 let float = "left"
-                let photoURL = ""
-
-                if (props.user.uid == message.senderId) {
-                    float = "right"
-                    photoURL = props.user.photoURL
-                } else {
-                    photoURL = getSenderPhotoURL(props.mode !== "GROUP" ? chat.membersInfo : membersInfo, message.senderId)
-                }
-
-                let fullMessage = { ...message, senderPhotoURL: photoURL, senderName: message.senderName }
 
                 return (
-                    <Message message={fullMessage} float={float} index={index} isUser={isUser} key={index} />
+                    <Message message={doc} float={float} index={index} isUser={isUser} key={index} />
                 )
             })}
         </Grid>
 
     )
 
-    function handleKeyUp(e){
-        if(e.key === "Enter"){
+    function handleKeyUp(e) {
+        if (e.key === "Enter") {
             handleAddMessage()
         }
+    }
+
+    function hadleAttachClick() {
+        let inp = document.getElementById("fileInput")
+        inp.click()
+    }
+
+    function handleAttachFile(e) {
+        console.log(e.target.files)
+        e.target.files.length > 0 && setFiles(e.target.files)
+    }
+
+    function clearFiles() {
+        setFiles([])
     }
 
 
     return (
         <div className="chat-wrapper">
-            <div className="chatHeader">
-                <Paper square>
-                    <Button size="small" onClick={() => props.toggleHidden()}>Hide list</Button>
-                    <h1 style={{ margin: 0, display: "inline" }}>{props.mode === "GROUP" ? chatTitle : chatName}</h1>
-                </Paper>
-            </div>
+            <ChatHeader chat={chat} toggleHidden={props.toggleHidden} isGroupChat={props.isGroupChat} deleteChat={props.deleteChat} history={props.history}/>
 
             <div id="chat-container">
                 <Paper className="chat-container-paper" square>
-                    {allMessages?.docs.length > 0 ? messagesList : "The chat is empty"}
+                    {allMessages?.length > 0 ? messagesList : "The chat is empty"}
                 </Paper>
             </div>
 
             <div className="chat-footer">
+
+                <ChatAttachmentPreview attachments={files} clearFiles={clearFiles} />
                 <Paper className="chat-footer-paper" square>
-                    <Button color="primary" className="atttachBtn">Attach</Button>
-                    <input className="messageInput" value={message} onChange={(e) => setMessage(e.target.value)} onKeyUp={handleKeyUp}/>
+                    <Button color="primary" className="atttachBtn" onClick={hadleAttachClick}>Attach</Button>
+                    <input type="file" hidden id="fileInput" onChange={handleAttachFile} multiple />
+                    <input className="messageInput" value={message} onChange={(e) => setMessage(e.target.value)} onKeyUp={handleKeyUp} />
                     <Button color="secondary" className="sendBtn" onClick={handleAddMessage}>Send</Button>
                 </Paper>
 
@@ -140,4 +195,4 @@ const mapDispatchToProps = dispatch => {
     }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Chat)
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(Chat))

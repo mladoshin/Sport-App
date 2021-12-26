@@ -16,8 +16,6 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import WorkoutPlanCalendarDialog from "./workoutPlanCalendarDialog"
 import { Button, Typography } from '@material-ui/core'
 
-let todayStr = new Date().toISOString().replace(/T.*$/, '')
-console.log(todayStr)
 
 const BorderLinearProgress = withStyles((theme) => ({
   root: {
@@ -60,7 +58,7 @@ function WorkoutPlanCalendar(props) {
   const [open, setOpen] = useState({payload: null, mode: "CREATE"})
   const [content, setContent] = useState(init_content)
 
-  console.log(content)
+  // console.log(content)
 
   useEffect(()=>{
     console.log("Init the state")
@@ -68,7 +66,7 @@ function WorkoutPlanCalendar(props) {
   }, [props.user.uid])
 
 
-  console.log(props.planId)
+  // console.log(props.planId)
 
   function renderEventContent(eventInfo) {
     console.log(eventInfo.event.startStr)
@@ -192,20 +190,6 @@ function WorkoutPlanCalendar(props) {
         eventAdd={(e)=>console.log("eventAdd")}
         eventContent={renderEventContent}
         eventClick={(e)=>handleEventClick(e)}
-        /*eventContent={renderEventContent} // custom render function 
-        
-        
-        select={(e)=>handleDateSelect(e)}
-        eventAdd={(e)=>console.log("eventAdd")}*/
-      /*weekends={this.state.weekendsVisible}
-      initialEvents={INITIAL_EVENTS} // alternatively, use the `events` setting to fetch from a feed
-      
-       // called after events are initialized/added/changed/removed
-    you can update a remote database when these fire:
-    
-    eventChange={function(){}}
-    eventRemove={function(){}}
-    */
       />
 
     {open.payload ? <WorkoutPlanCalendarDialog open={open} setOpen={setOpen} addContent={(item)=>setContent([...content, item])} group={props.group} planId={props.planId}/> : null}

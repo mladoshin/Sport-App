@@ -1,29 +1,22 @@
 import React, {useState, useEffect, useRef} from "react"
 import { ListItem, Paper, Avatar } from "@material-ui/core"
-import firebase from '../../firebase/firebase';
-import { Suspense } from "react";
+import {withRouter} from "react-router";
 
 function GroupChatItem(props) {
     const chat = props.chat
-    const membersStr = props.membersStr
-    const setCurrentChat = props.setCurrentChat
+    console.log(chat)
 
-
-    useEffect(()=>{
-        if (props.mode !== "GROUP"){
-            
-        }
-        
-        
-    }, [props.chat])
+    function handleGroupChatClick(){
+        props.history.push("/chats/chatId="+chat.chatId)
+    }
 
     return (
         <ListItem button style={{ padding: 5}}>
             
-            <Paper style={{ width: "100%", height: "60px", display: "flex", flexDirection: "row", alignItems: "center" }} onClick={() => setCurrentChat(chat)}>
+            <Paper style={{ width: "100%", height: "60px", display: "flex", flexDirection: "row", alignItems: "center", padding: 10 }} onClick={handleGroupChatClick}>
                 
-                <div>
-                    <h4 style={{ display: "inline", margin: 0 }}>{chat.title}</h4>
+                <div style={{height: 25}}>
+                    <h4 style={{ display: "inline", margin: 0 }}><strong style={{fontSize: 20}}>{chat.groupName}</strong>{" ("+chat.title+")"}</h4>
                     <p>{chat?.members?.join(", ")}</p>
                 </div>
 
@@ -32,4 +25,4 @@ function GroupChatItem(props) {
         </ListItem>
     )
 }
-export default GroupChatItem
+export default withRouter(GroupChatItem)

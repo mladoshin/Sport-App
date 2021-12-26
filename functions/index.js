@@ -242,10 +242,10 @@ exports.applyToTrainingGroup = functions.https.onCall((data, context) => {
 
     getUsersDataByIds([userId]).then(res => {
         const user = res[0]
-        if(!user){
+        if (!user) {
             return
         }
-        
+
         let applicant = {
             name: user.name,
             surname: user.surname,
@@ -268,17 +268,17 @@ exports.updateTrainingGroupInfo = functions.https.onCall((data, context) => {
     const groupId = data.groupId
     const updates = data.updates
     const userId = context.auth.uid
-    
-    if(!groupId || !userId || !updates){
+
+    if (!groupId || !userId || !updates) {
         return
     }
 
     isGroupOwner(groupId, userId).then(isOwner => {
-        if(isOwner && updates){
+        if (isOwner && updates) {
             admin.firestore().collection("training-groups").doc(groupId).update(updates).catch(err => console.log(err))
         }
     })
-    
+
 })
 
 
@@ -293,13 +293,13 @@ exports.addNewPostToTrainingGroup = functions.https.onCall((data, context) => {
         caption: caption,
         photos: urls,
         dateCreated: admin.firestore.FieldValue.serverTimestamp()
-      }
+    }
 
     const doc = group.isPrivate ? "private" : "public"
     admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("posts").add(post)
-    .catch(err => console.log(err))
+        .catch(err => console.log(err))
 
-    
+
 })
 
 exports.deleteWorkoutPlanFromTrainingGroup = functions.https.onCall((data, context) => {
@@ -312,7 +312,7 @@ exports.deleteWorkoutPlanFromTrainingGroup = functions.https.onCall((data, conte
 
 exports.createWorkoutPlan = functions.https.onCall((data, context) => {
     const group = data.group
-    const workoutPlan = {...data.workoutPlan, dateCreated: admin.firestore.FieldValue.serverTimestamp()}
+    const workoutPlan = { ...data.workoutPlan, dateCreated: admin.firestore.FieldValue.serverTimestamp() }
 
     const doc = group.isPrivate ? "private" : "public"
     return admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").add(workoutPlan).catch(err => functions.logger.log(err))
@@ -348,24 +348,24 @@ exports.deleteRecipientFromTrainingPlan = functions.https.onCall((data, context)
 exports.createDayWorkout = functions.https.onCall((data, context) => {
     const group = data.group
     const planId = data.planId
-    const workout = {...data.workout, dateCreated: admin.firestore.FieldValue.serverTimestamp()}
+    const workout = { ...data.workout, dateCreated: admin.firestore.FieldValue.serverTimestamp() }
 
     const doc = group.isPrivate ? "private" : "public"
     admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").add(workout)
-      .then((docRef) => {
-        let shortcut = {
-          title: workout.title,
-          dateStr: workout.dateStr
-        }
-        createDayWorkoutShortcut(group, planId, shortcut, docRef.id)
-      })
-      .catch(err => console.log(err))
+        .then((docRef) => {
+            let shortcut = {
+                title: workout.title,
+                dateStr: workout.dateStr
+            }
+            createDayWorkoutShortcut(group, planId, shortcut, docRef.id)
+        })
+        .catch(err => console.log(err))
 })
 
 function createDayWorkoutShortcut(group, planId, shortcut, workoutId) {
     const doc = group.isPrivate ? "private" : "public"
     admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).set(shortcut).catch(err => functions.logger(err))
-  }
+}
 
 exports.deleteDayWorkout = functions.https.onCall((data, context) => {
     const group = data.group
@@ -374,18 +374,44 @@ exports.deleteDayWorkout = functions.https.onCall((data, context) => {
     const doc = group.isPrivate ? "private" : "public"
 
     admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").doc(workoutId).delete()
-    .then(()=>{
-        deleteDayWorkoutShortcut(group, planId, workoutId)
-    })
+        .then(() => {
+            deleteDayWorkoutShortcut(group, planId, workoutId)
+        })
 })
 
-function deleteDayWorkoutShortcut(group, planId, workoutId){
+function deleteDayWorkoutShortcut(group, planId, workoutId) {
     const doc = group.isPrivate ? "private" : "public"
     admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).delete()
 }
 
+exports.updateWorkoutContent = functions.https.onCall((data, context) => {
+    const group = data.group
+    const planId = data.planId
+    const updates = data.updates
+    const workoutId = data.workoutId
+
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").doc(workoutId).update(updates)
+        .then(() => {
+
+            let short_update = {}
+            if (updates.title) {
+                short_update.title = updates.title
+            }
+            if (short_update) {
+                updateWorkoutShortcut(group, planId, workoutId, short_update)
+            }
 
 
+        }).catch(err => console.log(err))
+})
+
+
+function updateWorkoutShortcut(group, planId, workoutId, updates) {
+    const doc = group.isPrivate ? "private" : "public"
+    admin.firestore().collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).update(updates)
+        .catch(err => console.log(err))
+}
 
 exports.getAllUsers = functions.https.onCall((data, context) => {
     return admin
@@ -409,73 +435,44 @@ exports.getAllUsers = functions.https.onCall((data, context) => {
         })
 })
 
-//trigger for updated training groups
-// exports.updateTrainingGroupTrigger = functions.firestore
-//     .document('training-groups/{groupId}')
-//     .onUpdate((change, context) => {
-//         // Get an object representing the document
-//         // e.g. {'name': 'Marie', 'age': 66}
-//         const newValue = change.after.data()
-//         const oldValue = change.before.data()
-//         const owner = newValue.owner
-//         const membersAfter = newValue.members
-//         const membersBefore = oldValue.members
-//         const groupId = context.params.groupId
-
-//         const groupShortcut = {
-//             name: newValue.name,
-//             isPrivate: newValue.isPrivate,
-//             dateCreated: newValue.dateCreated,
-//             members: membersAfter,
-//             owner: owner
-//         }
-
-//         functions.logger.info(groupId, { structuredData: true });
-//         functions.logger.info(owner, { structuredData: true });
-
-//         fireDB.collection("users").doc(owner).collection("training-groups").doc(groupId).update(groupShortcut)
-
-//         membersAfter.forEach((memberId) => {
-//             fireDB.collection("users").doc(memberId).collection("training-groups").doc(groupId).update(groupShortcut)
-//         })
-
-
-//         functions.logger.info("Training group has been updated!");
-//         functions.logger.info(newValue, { structuredData: true });
-//         functions.logger.info(oldValue, { structuredData: true });
-
-//         // perform desired operations ...
-//     });
-
 function getGroupMembers(groupId) {
     return fireDB.collection("tarining-groups").doc(groupId).get().then(res => { return res.get("members") })
 }
 
-// exports.addNewMemberToTrainingGroup = functions.firestore
-//     .document('training-groups/{groupId}/members/{memberId}')
-//     .onCreate((snap, context) => {
-//         // Get an object representing the document
-//         // e.g. {'name': 'Marie', 'age': 66}
-//         const memberId = context.params.memberId
-//         const groupId = context.params.groupId
-//         functions.logger.info("New member has been added to training group!");
+exports.addPersonalChat = functions.https.onCall((data, context) => {
+    const recipientId = data.recipientId
+    const userId = context.auth.uid
 
-//         fireDB.collection("training-groups").doc(groupId).update({ members: admin.firestore.FieldValue.arrayUnion(memberId) })
+    const user = {
+        name: context.auth.token.name,
+        uid: userId,
+        photoURL: context.auth.token.picture
+    }
 
-//     });
+    functions.logger.log(user, { structuredData: true })
 
-// exports.removeMemberFromTrainingGroup = functions.firestore
-//     .document('training-groups/{groupId}/members/{memberId}')
-//     .onDelete((snap, context) => {
-//         // Get an object representing the document
-//         // e.g. {'name': 'Marie', 'age': 66}
-//         const memberId = context.params.memberId
-//         const groupId = context.params.groupId
-//         functions.logger.info("New member has been added to training group!");
+    getUsersDataByIds([recipientId]).then(res => {
+        const recipient = res[0]
 
-//         fireDB.collection("training-groups").doc(groupId).update({ members: admin.firestore.FieldValue.arrayRemove(memberId) })
+        if (recipient) {
 
-//     });
+            let chatData = {
+                membersInfo: [recipient, user],
+                memberIDs: [recipientId, userId],
+                dateCreated: admin.firestore.FieldValue.serverTimestamp()
+            }
+
+            functions.logger.log(chatData, { structuredData: true })
+
+            admin.firestore().collection("chat-groups").add(chatData)
+                .then((docRef) => {
+                    functions.logger.log("The chat group has been successfully added!")
+                })
+                .catch(err => console.log(err))
+
+        }
+    })
+})
 
 exports.addChatTrigger = functions.firestore
     .document('chat-groups/{chatId}')
@@ -483,42 +480,30 @@ exports.addChatTrigger = functions.firestore
         // Get an object representing the document
         // e.g. {'name': 'Marie', 'age': 66}
         const newChat = snap.data()
+        const chatId = context.params.chatId
         functions.logger.info("New chat group has been created!");
 
-        const members = snap.get("members")
-        functions.logger.info(members, { structuredData: true });
+        const memberIDs = snap.data().memberIDs
 
-        let chatShortcut = {
-            dateCreated: snap.get("dateCreated"),
-            members: members
-        }
-        functions.logger.info(chatShortcut, { structuredData: true });
-
-
-        //fireDB.collection("users").doc(owner).collection("training-groups").doc(snap.id)
-        //    .set(groupShortcut)
-        //    .catch(err => functions.logger.info(err, { structuredData: true }))
-
-        members.forEach((member, index) => {
-            var addedMembers = members.filter(function (x) { return x !== member; });
-
-            functions.logger.info("addedMembers");
-            functions.logger.info(addedMembers, { structuredData: true });
-
-            let chatShortcut = {
-                dateCreated: snap.get("dateCreated"),
-                members: addedMembers
-            }
-
-            functions.logger.info("chatShortcut");
-            functions.logger.info(chatShortcut, { structuredData: true });
-
-            fireDB.collection("users").doc(member.uid).collection("chats").doc(snap.id)
-                .set(chatShortcut)
-                .catch(err => functions.logger.info(err, { structuredData: true }))
+        getAllUsersByID(memberIDs).then(members => {
+            admin.firestore().collection("chat-groups").doc(chatId).update({membersInfo: members})
         })
-        // perform desired operations ...
     });
+
+function getAllUsersByID(IDs) {
+
+    let p = new Promise((resolve, reject) => {
+        admin.firestore().collection("users").where(admin.firestore.FieldPath.documentId(), "in", IDs).get().then(snap => {
+            let users = []
+            snap.forEach(doc => {
+                users.push({ name: doc.get("name"), surname: doc.get("surname"), photoURL: doc.get("photoURL"), uid: doc.id })
+            })
+            console.log(users)
+            resolve(users)
+        }).catch(err => reject("Error" + err))
+    })
+    return p
+}
 
 exports.doesChatExist = functions.https.onCall((data, context) => {
     return new Promise((resolve, reject) => {

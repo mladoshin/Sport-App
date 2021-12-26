@@ -93,6 +93,12 @@ class Firebase {
 
     let deleteDayWorkout_l = this.functions.httpsCallable("deleteDayWorkout")
     this.deleteDayWorkout = (group, planId, workoutId) => deleteDayWorkout_l({ group, planId, workoutId })
+
+    let updateWorkoutContent_l = this.functions.httpsCallable("updateWorkoutContent")
+    this.updateWorkoutContent = (group, planId, workoutId, updates) => updateWorkoutContent_l({ group, planId, workoutId, updates })
+
+    let addPersonalChat_l = this.functions.httpsCallable("addPersonalChat")
+    this.addPersonalChat = (recipientId) => addPersonalChat_l({ recipientId })
     // <---------------callable functions for training groups------------------------>
 
 
@@ -112,7 +118,6 @@ class Firebase {
   logout() {
     return this.auth.signOut()
   }
-
 
   //function for getting all existing users with options(user's role)
   getAllUsers(options, setUsers) {
@@ -758,7 +763,6 @@ class Firebase {
       });
   }
 
-
   getAllApplicantsFromTrainingGroup(groupId, setRequests) {
     return this.fireDB.collection("training-groups").doc(groupId).collection("applicants").orderBy("applicationDate", "desc")
       .onSnapshot(snapshot => {
@@ -792,6 +796,31 @@ class Firebase {
         groups.push(groupItem)
       })
       setPublicGroups(groups)
+    })
+  }
+
+  getAllUserGroups(setUserGroups, setOwnerGroups) {
+    return this.fireDB.collection("training-groups").where("members", "array-contains", this.getCurrentUserId()).onSnapshot(snapshot => {
+      let groups = []
+      let ownerGroups = []
+      snapshot.forEach((group, i) => {
+        let groupItem = group.data()
+        groupItem.groupId = group.id
+
+        if (groupItem.owner == this.getCurrentUserId()) {
+          ownerGroups.push(groupItem)
+        } else {
+          groups.push(groupItem)
+        }
+
+      })
+
+      let userGroups = {
+        asMember: groups,
+        asOwner: ownerGroups
+      }
+
+      setUserGroups(userGroups)
     })
   }
 
@@ -886,26 +915,6 @@ class Firebase {
       })
   }
 
-  updateWorkoutContent(group, planId, workoutId, updates) {
-    const doc = group.isPrivate ? "private" : "public"
-    this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workouts").doc(workoutId).update(updates)
-      .then(() => {
-
-        let short_update = {}
-        if (updates.title) {
-          short_update.title = updates.title
-        }
-        this.updateWorkoutShortcut(group, planId, workoutId, short_update)
-
-      }).catch(err => console.log(err))
-  }
-
-  updateWorkoutShortcut(group, planId, workoutId, updates) {
-    const doc = group.isPrivate ? "private" : "public"
-    this.fireDB.collection("training-groups").doc(group.id).collection("content").doc(doc).collection("workout-plans").doc(planId).collection("workout-shortcuts").doc(workoutId).update(updates)
-      .catch(err => console.log(err))
-  }
-
   //<-----------------------FUNCTIONS FOR TRAINING GROUPS (END)----------------------->//
 
   //<-----------------------FUNCTIONS FOR CHAT (START)----------------------->//
@@ -944,28 +953,41 @@ class Firebase {
       })
   }
 
-  getAllUserChats(userId, setChatGroups) {
-    return this.fireDB.collection("users").doc(userId).collection("chats")
-      .onSnapshot((snapshot) => {
-        let chatList = []
-        snapshot.forEach((snap, index) => {
-          let chat = snap.data()
-          chat.chatId = snap.id
-          chatList.push(chat)
+  getAllUserChats(setUserGroupChats, setChatGroups) {
+    console.log("Fetching group chats")
+    return this.fireDB.collection("chat-groups").where("memberIDs", "array-contains", this.getCurrentUserId())
+      .onSnapshot(snap => {
+        let groupChats = []
+        let personalChats = []
+        snap.forEach(doc => {
+          let chat = doc.data()
+          chat.chatId = doc.id
+          if (chat.groupId) {
+            groupChats.push(chat)
+          } else {
+            personalChats.push(chat)
+          }
+
         })
-        setChatGroups(chatList)
+
+        setUserGroupChats(groupChats)
+        setChatGroups(personalChats)
       })
   }
 
-
-  addMessageToChat(sender, text, chatId) {
-
-    this.fireDB.collection("chat-groups").doc(chatId).collection("messages").add({
+  addMessageToChat(sender, text, chatId, fileURLs) {
+    let message = {
       senderId: sender.uid,
       senderName: sender.name,
       text: text,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    })
+    }
+
+    if (fileURLs?.length) {
+      message.fileURLs = fileURLs
+    }
+
+    this.fireDB.collection("chat-groups").doc(chatId).collection("messages").add(message)
   }
 
   getGroupChatsForTrainingGroup(groupId, setChats) {
@@ -981,21 +1003,49 @@ class Firebase {
   }
 
 
-  addNewGroupChat(groupId, members, title) {
-    let chatData = {
-      memberIDs: members,
-      groupId: groupId,
-      title: title,
-      dateCreated: Date.now()
-    }
+  addNewGroupChat(groupId, members, title, groupName) {
 
-    console.log("Chat data: ")
-    console.log(chatData)
-    this.fireDB.collection("chat-groups").add(chatData)
-      .then((docRef) => {
-        console.log("The chat group has been successfully added!")
-      })
+    this.getAllUsersByID(members).then(users => {
+      let chatData = {
+        memberIDs: members,
+        groupId: groupId,
+        groupName: groupName,
+        title: title,
+        dateCreated: firebase.firestore.FieldValue.serverTimestamp()
+      }
+
+      console.log("Chat data: ")
+      console.log(chatData)
+      this.fireDB.collection("chat-groups").add(chatData)
+        .then((docRef) => {
+          console.log("The chat group has been successfully added!")
+        })
+        .catch(err => console.log(err))
+
+    })
+  }
+
+  deleteChat(chatId) {
+    this.fireDB.collection("chat-groups").doc(chatId)
+      .delete()
       .catch(err => console.log(err))
+
+
+  }
+
+  getAllUsersByID(IDs) {
+    console.log(firebase.firestore.FieldPath.documentId())
+    let p = new Promise((resolve, reject) => {
+      this.fireDB.collection("users").where(firebase.firestore.FieldPath.documentId(), "in", IDs).get().then(snap => {
+        let users = []
+        snap.forEach(doc => {
+          users.push({ ...doc.data(), uid: doc.id })
+        })
+        console.log(users)
+        resolve(users)
+      }).catch(err => reject("Error" + err))
+    })
+    return p
   }
 
   getUserInfoById(userId) {
@@ -1012,6 +1062,47 @@ class Firebase {
       }).then(user => {
         return user
       }).catch(err => console.log(err))
+  }
+
+  uploadFilesToChat(files, chatId) {
+
+    let url_list = []
+    const promises = [];
+
+    Array.from(files).forEach((file, index) => {
+      const NewUploadPromise = new Promise((resolve, reject) => {
+
+        const fileName = this.generateSalt(4) + Date.now() + ".jpg"
+        console.log(file)
+        const uploadTask = this.storage.ref("/chat-attachments/" + chatId + `/${fileName}`).put(file)
+        return uploadTask.on("state_changed",
+          snapshot => {
+
+          },
+          error => {
+            //errror function
+            console.log(error.message)
+            reject()
+          },
+          () => {
+            uploadTask.snapshot.ref.getDownloadURL().then(url => {
+              console.log(url)
+              //url_list.push(url)
+              resolve(url)
+            })
+
+          }
+        )
+      })
+      promises.push(NewUploadPromise)
+    })
+
+
+    //add posts to firebase firestore
+    return Promise.all(promises)
+      .then(res => {
+        return res
+      })
   }
   //<-----------------------FUNCTIONS FOR CHAT (END)----------------------->//
 
@@ -1080,179 +1171,37 @@ class Firebase {
       .catch(err => console.log(err.code));
   }
 
-  //<-----------------------FUNCTIONS FOR NOTIFICATIONS (START)----------------------->//  P.S. -> NOT WORKING YET!
-  // loadNotifications(loadNotificationsToRedux) {
-  //   console.log("Running firebase.loadNotifications!")
-  //   console.log(this.getCurrentUserId())
-  //   var starCountRef = this.db.ref("/" + this.getCurrentUserId() + "/notifications/").orderByKey().limitToLast(100);
 
-  //   starCountRef.on('value', function (snapshot) {
-  //     var notificationItems = [] //local temp variable
-  //     var identificators = snapshot.val() ? Object.keys(snapshot.val()) : null
+  getChat(chatId, setCurrentChat) {
+    this.fireDB.collection("chat-groups").doc(chatId).get().then(snapshot => {
+      if (!snapshot.exists) return
+      const chat = { ...snapshot.data(), chatId: snapshot.id }
+      setCurrentChat(chat)
+    })
+  }
 
-  //     var i = 0;
+  //get all messages in chat with chatId 
+  getChatMessages(chatId, setMessages, membersInfo) {
+    //console.log(membersInfo)
+    this.fireDB.collection("chat-groups")
+      .doc(chatId)
+      .collection("messages")
+      .orderBy("timestamp", "asc")
+      .onSnapshot(snapshot => {
+        let messages = []
+        snapshot.forEach(doc => {
+          let senderId = doc.data().senderId
+          let senderInfo = membersInfo ? membersInfo.filter(info => info.uid == senderId) : []
+          let senderPhotoURL = senderInfo[0] ? senderInfo[0].photoURL : null
+          let senderName = senderInfo[0] ? senderInfo[0].name : null
 
-  //     snapshot.forEach(function (snapItem) {
-  //       var item = snapItem.val()
-  //       item.id = identificators[i]
-
-  //       notificationItems.push(item)
-  //       i++
-  //     });
-
-  //     console.log(notificationItems)
+          messages.push({ ...doc.data(), messageId: doc.id, senderPhotoURL: senderPhotoURL })
+        })
+        setMessages(messages)
+      })
+  }
 
 
-
-  //     //goalCategories = Array.from(new Set(goalCategories))
-  //     //load json of all photos from database into redux state
-  //     loadNotificationsToRedux(notificationItems)
-  //   });
-  // }
-
-  // removeNotification(notificationId, type) {
-  //   if (type !== "VERIFICATION") {
-  //     try {
-  //       this.db.ref(this.getCurrentUserId() + "/notifications/" + notificationId).remove()
-  //     } catch (err) {
-  //       alert(err.message)
-  //     }
-  //   }
-  // }
-
-  //function for checking if the user has verified his email
-  // checkUser(id, type) {
-  //   if (this.auth.currentUser.emailVerified && type == "VERIFICATION") {
-  //     this.removeNotification(id, "VERIFIED")
-  //   }
-  // }
-
-  //<-----------------------FUNCTIONS FOR NOTIFICATIONS (END)----------------------->//
-
-  //<-----------------------FUNCTIONS FOR GOAL TRACKER (START)----------------------->//
-  // loadUserGoals(loadGoalItems, loadCategories) {
-  //   var starCountRef = this.db.ref(this.getCurrentUserId() + "/goals/").orderByKey();
-  //   starCountRef.on('value', function (snapshot) {
-  //     var goalItems = [] //local temp variable
-  //     var goalCategories = {}
-  //     var identificators = snapshot.val() ? Object.keys(snapshot.val()) : null
-  //     var i = 0
-
-  //     snapshot.forEach(function (snapItem) {
-  //       const item = snapItem.val();
-  //       item.id = identificators[i]
-  //       goalItems.push(item)
-
-  //       if (goalCategories[item.category] === undefined) {
-  //         goalCategories[item.category] = { count: 0, completedCount: 0 }
-  //       }
-  //       if (item.isCompleted) {
-  //         goalCategories[item.category].completedCount++
-  //       }
-  //       goalCategories[item.category].count++
-
-  //       i++
-  //     });
-
-  //     //goalCategories = Array.from(new Set(goalCategories))
-  //     //load json of all photos from database into redux state
-  //     loadGoalItems(goalItems)
-  //     loadCategories(goalCategories)
-  //   });
-  // }
-
-  // addNewGoal(props) {
-  //   //console.log(props)
-  //   try {
-  //     const id = this.db.ref(this.getCurrentUserId() + "/goals").push({
-  //       name: props.name,
-  //       category: props.category,
-  //       type: props.type,
-  //       units: props.units,
-  //       targetValue: props.targetValue,
-  //       startValue: props.startValue,
-  //       currentValue: props.startValue,
-  //       deadline: props.deadline,
-  //       description: props.description,
-  //       dateCreated: Date.now(),
-  //       isCompleted: false,
-  //       isArchieved: false,
-  //       startRepsValue: props.startRepsValue,
-  //       targetRepsValue: props.targetRepsValue,
-  //       currentRepsValue: props.startRepsValue
-  //     });
-
-  //     //this.quickResultUpdate(props.startValue, id.key)
-  //   } catch (err) {
-  //     alert(err.message)
-  //   }
-
-  // }
-
-  // completeGoal(id) {
-  //   try {
-  //     this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
-  //       isCompleted: true
-  //     });
-  //   } catch (err) {
-  //     alert(err.message)
-  //   }
-  // }
-
-  // uncompleteGoal(id) {
-  //   try {
-  //     this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
-  //       isCompleted: false
-  //     });
-  //   } catch (err) {
-  //     alert(err.message)
-  //   }
-  // }
-
-  // quickResultUpdate(result, currentRepsValue, id) {
-  //   console.log("Updating the goal through the quick update modal")
-  //   console.log(result, currentRepsValue, id)
-  //   try {
-  //     this.db.ref(this.getCurrentUserId() + "/goals/" + id).update({
-  //       currentValue: result,
-  //       currentRepsValue: currentRepsValue ? currentRepsValue : null
-  //     });
-
-  //   } catch (err) {
-  //     alert(err.message)
-  //   }
-  // }
-
-  // updateGoal(goal) {
-  //   console.log(goal)
-  //   try {
-  //     this.db.ref(this.getCurrentUserId() + "/goals/" + goal.id).update({
-  //       name: goal.name,
-  //       category: goal.category,
-  //       type: goal.type,
-  //       units: goal.units,
-  //       targetValue: goal.targetValue,
-  //       currentValue: goal.startValue,
-  //       deadline: goal.deadline,
-  //       description: goal.description,
-  //       targetRepsValue: goal.targetRepsValue ? goal.targetRepsValue : null,
-  //       currentRepsValue: goal.startRepsValue ? goal.startRepsValue : null
-  //     });
-  //     //this.quickResultUpdate(goal.startValue, goal.currentRepsValue, goal.id) //push currentValue to goal stats
-  //   } catch (err) {
-  //     alert(err.message)
-  //   }
-  // }
-
-  // deleteGoal(goalId) {
-  //   try {
-  //     this.db.ref(this.getCurrentUserId() + "/goals/" + goalId).remove()
-  //   } catch (err) {
-  //     alert(err.message)
-  //   }
-  // }
-
-  //<-----------------------FUNCTIONS FOR GOAL TRACKER (END)----------------------->// P.S. -> NOT WORKING YET!
 
 }
 

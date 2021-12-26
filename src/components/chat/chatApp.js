@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { List, ListItem, Paper, Button, Avatar } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles';
-import { withRouter } from "react-router";
+import { withRouter, useParams } from "react-router";
 
 // importing required components
 import GroupChatItem from "./groupChatItem"
@@ -17,6 +17,8 @@ import getRecipient from "../../utils/getRecipient";
 import doesChatExist from "../../utils/doesChatExist";
 import CustomListItem from "./customListItem";
 import getMembersNames from "../../utils/getMembersNames";
+import ChatHeader from "./chatHeader";
+import ChatAttachments from "./chatAttachments";
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -98,7 +100,7 @@ const useStyles = makeStyles((theme) => ({
 function UsersListComponent({ allUsers, owner, handleAddPersonalChat, setOpen, goToProfile }) {
     const classes = useStyles();
 
-    function onAvatarClick(uid){
+    function onAvatarClick(uid) {
         goToProfile(uid)
     }
 
@@ -111,7 +113,7 @@ function UsersListComponent({ allUsers, owner, handleAddPersonalChat, setOpen, g
                 {allUsers.map(user => {
                     if (user.id !== owner.uid) {
                         return (
-                            <CustomListItem onClick={() => handleAddPersonalChat(user)} recipient={user} onAvatarClick={()=>onAvatarClick(user.id)}/>
+                            <CustomListItem onClick={() => handleAddPersonalChat(user)} recipient={user} onAvatarClick={() => onAvatarClick(user.id)} />
                         )
                     }
                 })}
@@ -123,48 +125,61 @@ function UsersListComponent({ allUsers, owner, handleAddPersonalChat, setOpen, g
     )
 }
 
-function ChatsListComponent({ chats, setCurrentChat, mode, goToProfile }) {
+function ChatsListComponent({ chats, groupChats, setCurrentChat, mode, goToProfile, openChat, deleteChat }) {
     const classes = useStyles();
+    console.log(mode)
 
-    function deleteChat(chatId) {
-        console.log("Deleting the chat with ID: " + chatId)
-        const consent = window.confirm("Are you sure you want to delete the chat?")
-        if (consent) {
-            firebase.firedDB.collection("chat-groups").doc(chatId)
-                .delete()
-                .catch(err => console.log(err))
-        }
+    // function deleteChat(chatId) {
+    //     console.log("Deleting the chat with ID: " + chatId)
+    //     const consent = window.confirm("Are you sure you want to delete the chat?")
+    //     if (consent) {
+    //         firebase.firedDB.collection("chat-groups").doc(chatId)
+    //             .delete()
+    //             .catch(err => console.log(err))
+    //     }
 
-    }
+    // }
 
-    function onAvatarClick(uid){
+    function onAvatarClick(uid) {
         goToProfile(uid)
     }
 
     const chatsGrid = (
         <List>
 
-            {chats?.docs.map((doc, index) => {
-                let chat = doc.data()
-                chat.chatId = doc.id
-                console.log(chat)
+            {chats?.map((chat, index) => {
 
                 let membersStr = getMembersNames(chat.membersInfo)
 
                 let recipients = getRecipient(chat.membersInfo, firebase.getCurrentUserId())
-
+                //let recipientId = recipients[0].uid
 
                 if (mode === "GROUP") {
                     return (
                         <GroupChatItem key={index} setCurrentChat={setCurrentChat} chat={chat} membersStr={membersStr} mode={mode} recipients={recipients} />
                     )
-                } else if(!chat.groupId){
+                } else if (!chat.groupId) {
                     //render this item only if this is not a group chat
                     return (
-                        <CustomListItem onClick={() => setCurrentChat(chat)} recipient={recipients[0]} onRightClick={() => deleteChat(chat.chatId)} onAvatarClick={()=>onAvatarClick(recipients[0]?.uid)}/>
+                        <CustomListItem onClick={() => openChat(chat.chatId)} recipient={recipients && recipients[0]} onRightClick={() => deleteChat(chat.chatId)} onAvatarClick={() => onAvatarClick(recipients[0]?.uid)} />
                     )
                 }
             })}
+
+            {mode !== "GROUP" && <hr />}
+
+            <div style={{ textAlign: "center" }}><h3>Group chats</h3></div>
+            {/* display group chats */}
+            {
+                groupChats?.map((groupChat, i) => {
+                    let membersStr = getMembersNames(groupChat.membersInfo)
+                    let recipients = getRecipient(groupChat.membersInfo, firebase.getCurrentUserId())
+
+                    return (
+                        <GroupChatItem key={i} setCurrentChat={setCurrentChat} chat={groupChat} membersStr={membersStr} recipients={recipients} />
+                    )
+                })
+            }
 
         </List>
     )
@@ -177,25 +192,40 @@ function ChatsListComponent({ chats, setCurrentChat, mode, goToProfile }) {
 }
 
 function ChatComponent(props) {
-    
+    const { chatId } = useParams("chatId")
     const classes = useStyles();
-    const dbQuery = props.mode === "GROUP" ? firebase.fireDB.collection("chat-groups").where("groupId", "==", props.group.id) : firebase.fireDB.collection("chat-groups").where("memberIDs", "array-contains", firebase.getCurrentUserId())
+
     const [open, setOpen] = useState(false)
-    const [chatGroups, setChatGroups] = useState([])
-    const [chats, loading, error] = useCollection(
-        dbQuery
-    )
+
     const [hidden, setHidden] = useState(false)
     const [currentChat, setCurrentChat] = useState()
     const [allUsers, setAllUsers] = useState([])
-    //function for adding new training groups
+    
+    const [isGroupChat, setIsGroupChat] = useState(false)
 
     useEffect(() => {
-        //setChatGroups(init_chats)
+
         if (props.mode !== "GROUP") {
             firebase.getAllUsers({ role: "ALL" }, setAllUsers)
         }
+
     }, [])
+
+    useEffect(() => {
+        setCurrentChat()
+        if (chatId) {
+            console.log("Getting chat")
+            firebase.getChat(chatId, setCurrentChat)
+        }
+    }, [chatId])
+
+    useEffect(() => {
+        if (currentChat && !currentChat.groupId) {
+            setIsGroupChat(false)
+        } else if (currentChat && currentChat.groupId) {
+            setIsGroupChat(true)
+        }
+    }, [currentChat])
 
     function toggleHidden() {
         setHidden((prevState) => {
@@ -203,15 +233,13 @@ function ChatComponent(props) {
         })
     }
 
-    function goToProfile(uid){
-        props.history.push("/viewProfile/uid="+uid)
+    function goToProfile(uid) {
+        props.history.push("/viewProfile/uid=" + uid)
     }
 
     // function for adding a new personal chat
     function handleAddPersonalChat(member) {
-        // console.log("Selected user: ")
-        // console.log(member)
-        let chatExists = doesChatExist(chats, member.id)
+        let chatExists = doesChatExist(props.userChats, member.id)
         console.log(chatExists)
         if (chatExists) {
             // if the chat already exists, then alert the error
@@ -241,7 +269,7 @@ function ChatComponent(props) {
         alert("Adding group chat!")
         console.log(props.group.members)
         const chatName = window.prompt("Enter chat name: ")
-        firebase.addNewGroupChat(props.group.id, props.group.members, chatName)
+        firebase.addNewGroupChat(props.group.id, props.group.members, chatName, props.group.name)
     }
 
     function handleButtonClick() {
@@ -249,6 +277,55 @@ function ChatComponent(props) {
             handleAddGroupChat()
         } else {
             setOpen(true)
+        }
+    }
+
+    function openChat(chatID) {
+        props.history.push("/chats/chatId=" + chatID)
+    }
+
+    function deleteChat() {
+        console.log("Deleting the chat with ID: " + chatId)
+        const consent = window.confirm("Are you sure you want to delete the chat?")
+        if (consent) {
+            firebase.deleteChat(chatId)
+        }
+    }
+
+    //chat content component with routing
+    function ChatContent() {
+        if (props.type == "chat-info") {
+            return (
+                <div className="chat-wrapper">
+                    <ChatHeader chat={currentChat} toggleHidden={toggleHidden} isGroupChat={isGroupChat} deleteChat={deleteChat} history={props.history}/>
+                    <h3>Chat Info</h3>
+                </div>
+            )
+        } else if (props.type == "chat-attachments") {
+            return (
+                <div className="chat-wrapper">
+                    <ChatHeader chat={currentChat} toggleHidden={toggleHidden} isGroupChat={isGroupChat} deleteChat={deleteChat} history={props.history}/>
+                    <h3>Chat Attachments</h3>
+                    <ChatAttachments chatId={currentChat?.chatId}/>
+                </div>
+            )
+        } else {
+            return (
+                <>
+                    {currentChat ?
+                        <Chat
+                            toggleHidden={toggleHidden}
+                            chat={currentChat}
+                            mode={props.mode}
+                            membersInfo={props.group?.membersInfo}
+                            deleteChat={deleteChat}
+                            isGroupChat={isGroupChat}
+                        />
+                        :
+                        <h3>Select a chat in the sidebar</h3>
+                    }
+                </>
+            )
         }
     }
 
@@ -261,29 +338,62 @@ function ChatComponent(props) {
                 </Paper>
 
                 {open ?
-                    <UsersListComponent allUsers={allUsers} owner={props.user} handleAddPersonalChat={handleAddPersonalChat} setOpen={setOpen} goToProfile={goToProfile}/>
+                    <UsersListComponent
+                        allUsers={allUsers}
+                        owner={props.user}
+                        handleAddPersonalChat={handleAddPersonalChat}
+                        setOpen={setOpen}
+                        goToProfile={goToProfile}
+                    />
                     :
-                    <ChatsListComponent chats={chats} setCurrentChat={setCurrentChat} mode={props.mode} goToProfile={goToProfile}/>
+                    <ChatsListComponent
+                        chats={props.mode !== "GROUP" ? props.userChats : []}
+                        groupChats={props.mode === "GROUP" ? props.userGroupChats?.filter(groupChat => groupChat.groupId == props.group.id) : props.userGroupChats}
+                        mode={props.mode}
+                        goToProfile={goToProfile}
+                        openChat={openChat}
+                        setCurrentChat={setCurrentChat}
+                        deleteChat={deleteChat}
+                    />
                 }
                 <Paper square>
-                    <center><Button onClick={handleButtonClick}>Add new chat</Button></center>
+                    <center>
+                        <Button onClick={handleButtonClick}>
+                            Add new chat
+                        </Button>
+                    </center>
                 </Paper>
 
             </div>
 
             <div className={classes.currentChat} style={{ width: hidden ? "100%" : "75%" }}>
 
-                {currentChat ? <Chat toggleHidden={toggleHidden} chat={currentChat} mode={props.mode} membersInfo={props.group?.membersInfo}/> : <h3>Select a chat in the sidebar</h3>}
+                <ChatContent/>
+                {/* {currentChat ?
+                    <Chat
+                        toggleHidden={toggleHidden}
+                        chat={currentChat}
+                        mode={props.mode}
+                        membersInfo={props.group?.membersInfo}
+                        deleteChat={deleteChat}
+                    />
+                    :
+                    <h3>Select a chat in the sidebar</h3>
+                } */}
 
             </div>
         </div>
     )
 }
 
+
+
 const mapStateToProps = state => {
     return {
         user: state.user,
-        theme: state.theme
+        theme: state.theme,
+        userChats: state.userChats,
+        userGroupChats: state.userGroupChats
     }
 }
 

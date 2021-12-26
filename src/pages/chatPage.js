@@ -2,7 +2,7 @@
 import React from "react"
 import { Container } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles';
-
+import { useParams } from "react-router";
 
 // Import the chat component
 import ChatComponent from "../components/chat/chatApp"
@@ -19,13 +19,16 @@ const useStyles = makeStyles((theme) => ({
 
 function ChatPage(props) {
     const classes = useStyles();
+    const {userId} = useParams()
 
+    console.log(userId)
+    
     return (
         <>
             <Container className={classes.mainContainer} maxWidth="xl">
 
                 {/* Chat component */}
-                <ChatComponent/>
+                <ChatComponent type={props.type}/>
 
             </Container>
 

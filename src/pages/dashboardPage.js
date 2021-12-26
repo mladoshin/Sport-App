@@ -83,10 +83,7 @@ function DashboardPage() {
                 )
             })}
             <Button onClick={() => {
-                const groupId = "PgTBRPB3Xk4kXWopxpsS"
-                const memberId = "gIq6JWDoH9dxLTpFeV0wHqy2tDy1"
-                isAlreadySubscribed(groupId, memberId).then(res => console.log(res)).catch(console.log)
-                isGroupOwner(groupId, memberId).then(res => console.log("owner: "+res))
+                firebase.addPersonalChat("2DQN5cr9DmQa9jB2cAEajbneTBi1")
             }}>Update Chats</Button>
                 
         </div>

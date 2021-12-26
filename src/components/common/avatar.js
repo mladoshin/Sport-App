@@ -31,7 +31,7 @@ function CustomAvatar({ history, user, style, disableRipple, btnStyle }) {
     }
 
     return (
-        <IconButton onClick={openProfile} style={{backgroundColor: disableRipple && "transparent", ...btnStyle}}><Avatar alt="User" src={user.photoURL} className={classes.avatar} style={style}>{user.name}</Avatar></IconButton>
+        <IconButton onClick={openProfile} style={{backgroundColor: disableRipple && "transparent", ...btnStyle}}><Avatar alt="User" src={user?.photoURL} className={classes.avatar} style={style}>{user?.name}</Avatar></IconButton>
 
     )
 }

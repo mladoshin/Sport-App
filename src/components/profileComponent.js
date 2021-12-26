@@ -75,8 +75,6 @@ function ProfileComponent(props) {
     }
   }
 
-  console.log(props.theme)
-
 
   return (
     <React.Fragment>

@@ -16,7 +16,6 @@ import Compress from "react-image-file-resizer";
 function UploadDialog(props) {
     //state for selected image
     const [avatarImg, setAvatarImg] = useState()
-    console.log(avatarImg)
     
     //function for handling the avatar upload process
     function handleUpload(){

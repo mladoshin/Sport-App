@@ -7,14 +7,18 @@ import { avatarReducer } from './avatarReducer'
 import { notificationReducer } from './notificationReducer'
 import { isMobileReducer } from './isMobileReducer'
 import { userPreferencesReducer } from "./userPreferencesReducer"
+import { userChatsReducer } from './userChatsReducer'
+import { userGroupChatsReducer } from './userGroupChatsReducer'
+import { userGroupsReducer } from './userGroupsReducer'
 
 export const rootReducer = combineReducers({
   user: userReducer,
   theme: themeReducer,
-  goals: goalsReducer,
-  goalCategories: categoryReducer,
   userAvatar: avatarReducer,
   notifications: notificationReducer,
   isMobile: isMobileReducer,
-  userPreferences: userPreferencesReducer
+  userPreferences: userPreferencesReducer,
+  userChats: userChatsReducer,
+  userGroupChats: userGroupChatsReducer,
+  userGroups: userGroupsReducer
 })

@@ -8,6 +8,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import ChatBubbleRoundedIcon from '@material-ui/icons/ChatBubbleRounded';
 
 import { useDocumentData } from "react-firebase-hooks/firestore";
+import { getChatIdByUserID } from "../utils/getChatIdByUserId";
 
 //styles
 const useStyles = makeStyles((theme) => ({
@@ -61,30 +62,49 @@ function ProfilePage(props) {
         console.log(userInfo)
     }, [userInfo])
 
+    function handleMessage() {
+
+        getChatIdByUserID(uid, props.userChats).then(res => {
+
+            if (!res.chatId && !res.error) {
+                let response = window.confirm("Do you want to create a new chat? ")
+                if (response){
+                    //create a new chat here
+
+                }
+            }else{
+                let url = "/chats/chatId=" + res.chatId
+                props.history.push(url)
+            }
+
+        })
+
+    }
+
 
     return (
         <React.Fragment>
 
             <Container component="main" maxWidth="xl" className={classes.mainContainer}>
                 <h1>Page for user {uid}</h1>
-                {!loading ? 
+                {!loading ?
                     <center>
-                        <Avatar src={userInfo?.photoURL} className={classes.avatar}/>
-                        <div style={{ textAlign: "left", width: 300}}>
+                        <Avatar src={userInfo?.photoURL} className={classes.avatar} />
+                        <div style={{ textAlign: "left", width: 300 }}>
                             <h3>Role: {userInfo?.role}</h3>
                             <h3>Name: {userInfo?.name}</h3>
                             <h3>Surname: {userInfo?.surname}</h3>
                             <h3>Email: {userInfo?.email}</h3>
                         </div>
-                        <Button color="primary" variant="contained" startIcon={<ChatBubbleRoundedIcon/>}>{"Message "+ userInfo?.name }</Button>  
+                        <Button color="primary" variant="contained" startIcon={<ChatBubbleRoundedIcon />} onClick={handleMessage}>{"Message " + userInfo?.name}</Button>
                     </center>
-                :
+                    :
                     <Container>
                         <center>
                             <CircularProgress />
                         </center>
                     </Container>
-                    }
+                }
 
 
             </Container>
@@ -98,7 +118,8 @@ function ProfilePage(props) {
 
 const mapStateToProps = state => {
     return {
-        user: state.user
+        user: state.user,
+        userChats: state.userChats
     }
 }
 

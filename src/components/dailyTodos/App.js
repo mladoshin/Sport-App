@@ -18,7 +18,7 @@ import DayDialog from "./dayDialog"
 import { Button, Typography } from '@material-ui/core'
 
 let todayStr = new Date().toISOString().replace(/T.*$/, '')
-console.log(todayStr)
+// console.log(todayStr)
 
 const BorderLinearProgress = withStyles((theme) => ({
   root: {

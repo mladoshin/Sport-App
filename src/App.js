@@ -74,19 +74,18 @@ function App(props) {
         props.setUser(userInfo)
       }).catch(console.log)
 
+      user && firebase.getAllUserGroups(props.setUserGroups)
+      //connect the listener for user chats
+      return user && firebase.getAllUserChats(props.setUserGroupChats, props.setUserChats)
+
   }, [user])
 
-  useEffect(()=>{
-    console.log(props.user)
-  }, [props.user])
 
   //Initial useEffect (called only once), attach the user listener and set the device type (click or touch)
   useEffect(() => {
     //set the isTouchabe (from isTouchable function) to redux
     props.setIsMobile(isMobile())
 
-    //attach a listener for user (get user's public information)
-    //firebase.getCurrentUser(props.setUser)
   }, [])
 
   // screen size event listener
@@ -135,6 +134,9 @@ function App(props) {
           <Route exact path="/training-groups" render={() => <Navbar><TrainingGroupsPage/></Navbar>} />
           <Route exact path="/training-groups/groupId=:groupId" render={() => <Navbar><TrainingGroupPage /></Navbar>} />
           <Route exact path="/chats" render={() => <Navbar><ChatPage /></Navbar>} />
+          <Route exact path="/chats/chatId=:chatId" render={() => <Navbar><ChatPage/></Navbar>} />
+          <Route exact path="/chats/chatId=:chatId/chat-info" render={() => <Navbar><ChatPage type="chat-info"/></Navbar>} />
+          <Route exact path="/chats/chatId=:chatId/chat-attachments" render={() => <Navbar><ChatPage type="chat-attachments"/></Navbar>} />
           <Route exact path="/calendar" render={() => <Navbar><CalendarPage /></Navbar>} />
           <Route exact path="/viewProfile/uid=:uid" render={() => <Navbar><ProfilePage /></Navbar>} />
 
@@ -180,17 +182,17 @@ const mapStateToProps = state => {
   return {
     isTouchable: state.isTouchable,
     theme: state.theme,
-    user: state.user,
-    userPreferences: state.userPreferences
+    user: state.user
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
     setIsMobile: (val) => dispatch({ type: "ISMOBILE/SET", payload: val }),
-    setTheme: (theme) => dispatch({ type: "THEME/CHANGE", payload: theme }),
     setUser: (obj) => dispatch({ type: "USER/LOADINFO", payload: obj }),
-    setUserPreferences: (obj) => dispatch({ type: "USER/LOAD-PREFERENCES", payload: obj })
+    setUserChats: (array) => dispatch({type: "USER_CHATS/SET", payload: array}),
+    setUserGroupChats: (array) => dispatch({type: "USER_GROUP_CHATS/SET", payload: array}),
+    setUserGroups: (array) => dispatch({type: "USER_GROUPS/SET", payload: array}),
   }
 }
 

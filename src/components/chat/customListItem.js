@@ -33,11 +33,7 @@ const useStyles = makeStyles((theme) => ({
 
 function CustomListItem(props) {
     const classes = useStyles();
-    const chat = props.chat
-    const setCurrentChat = props.setCurrentChat
     const userName = props.recipient.name + " " + props.recipient.surname
-
-    console.log(props.recipient)
 
     return (
         <ListItem button className={classes.listItem}>

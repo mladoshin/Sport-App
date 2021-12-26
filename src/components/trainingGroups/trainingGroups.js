@@ -40,36 +40,9 @@ function GroupGrid(props) {
 
 //main workout builder component
 function TrainingGroupsComponent(props) {
-    //state for all workouts
-    const [groups, setGroups] = useState([])
-    const [groupsAsOwner, setGroupsAsOwner] = useState([])
-    const [allPublicGroups, setAllPublicGroups] = useState([])
-
     //dialog state
     const [open, setOpen] = useState({ mode: null, payload: false })
 
-    console.log(groups)
-
-    //fetch all groups in this useEffect
-    useEffect(() => {
-
-        if(props.user?.uid){
-            return firebase.getUserTrainingGroups(props.user.uid, setGroups)
-        }
-        
-
-    }, [props.user.uid])
-
-    useEffect(() => {
-
-        if(props.user?.uid){
-            return firebase.getOwnerTrainingGroups(props.user.uid, setGroupsAsOwner)
-        }
-        
-
-    }, [props.user.uid])
-
-    
     //function for adding a a new groups
     function handleOpenGroupDialog() {
         setOpen({ payload: {}, mode: "CREATE" })
@@ -82,11 +55,11 @@ function TrainingGroupsComponent(props) {
             </Fab>
 
             <h1>My own training groups:</h1>
-            <GroupGrid groups={groupsAsOwner} goToPage={props.history.push} user={{ uid: props.user.uid }} />
+            <GroupGrid groups={props.userGroups.asOwner} goToPage={props.history.push} user={{ uid: props.user.uid }} />
 
 
             <h1>All my training groups:</h1>
-            <GroupGrid groups={groups} goToPage={props.history.push} user={{ uid: props.user.uid }} />
+            <GroupGrid groups={props.userGroups.asMember} goToPage={props.history.push} user={{ uid: props.user.uid }} />
 
             <br />
 
@@ -100,7 +73,8 @@ function TrainingGroupsComponent(props) {
 const mapStateToProps = state => {
     return {
         user: state.user,
-        theme: state.theme
+        theme: state.theme,
+        userGroups: state.userGroups
     }
 }
 

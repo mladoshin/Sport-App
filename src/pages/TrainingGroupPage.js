@@ -7,8 +7,7 @@ import { withRouter, useParams } from "react-router-dom";
 import firebase from '../firebase/firebase';
 //import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/core/styles';
-import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
-import AddIcon from '@material-ui/icons/Add';
+import AllMembersDialog from "../components/common/allMembersDialog"
 
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
@@ -79,7 +78,11 @@ function TrainingGroupPage(props) {
     const [groupOwners, setGroupOwners] = useState([])
     const [loaded, setLoaded] = useState(false)
 
+    const [membersDialogOpen, setMembersDialogOpen] = useState(null)
+
     const [currentPage, setCurrentPage] = useState(0)
+
+    console.log(groupMembers)
 
     //fetch the training group general information
     useEffect(() => {
@@ -106,11 +109,17 @@ function TrainingGroupPage(props) {
         }
     }, [groupContent])
 
-    console.log(groupMembers)
-
     function isUserInGroup(uid, groupMembers) {
         let res = groupMembers.indexOf(uid)
         return res > -1 ? true : false
+    }
+
+    function handleOpenMembersDialog(e) {
+        setMembersDialogOpen(e.target)
+    }
+
+    function handleCloseMembersDialog(e) {
+        setMembersDialogOpen(null)
     }
 
     //function for owners only (editing and settings)
@@ -193,16 +202,16 @@ function TrainingGroupPage(props) {
     function OwnersGrid() {
         return (
             <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                <div style={{width: 100}}>
+                <div style={{ width: 100 }}>
                     <h3>Owners:</h3>
                 </div>
-                
+
                 <Grid container>
                     {
                         groupOwners.map(owner => {
                             return (
                                 <Grid item lg={1}>
-                                   <CustomAvatar user={owner} disableRipple={true} style={{border: "2px solid grey"}}/>
+                                    <CustomAvatar user={owner} disableRipple={true} style={{ border: "2px solid grey" }} />
                                 </Grid>
                             )
                         })
@@ -220,7 +229,7 @@ function TrainingGroupPage(props) {
                 <Paper style={{ padding: 15, display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
                     <div style={{ flexGrow: 1 }}>
                         <h1>{groupContent.name}</h1>
-                        
+
                         <OwnersGrid />
                         {props.user.claims && <ActionButton />}
                     </div>
@@ -231,13 +240,22 @@ function TrainingGroupPage(props) {
 
                                 return (
                                     <Grid item lg={1}>
-                                        <CustomAvatar user={member} disableRipple={true} style={{border: "2px solid grey"}}/>
-                            
+                                        <CustomAvatar user={member} disableRipple={true} style={{ border: "2px solid grey" }} />
+
                                     </Grid>
                                 )
                             })}
                         </Grid>
-                        <Button size="small" color="primary">Show all members</Button>
+                        <Button
+                            size="small"
+                            color="primary"
+                            onClick={handleOpenMembersDialog}
+                            id="basic-button"
+                            aria-controls="basic-menu"
+                            aria-haspopup="true"
+                        >
+                            Show all members
+                        </Button>
                     </div>
                     <div style={{ width: "100%", borderTop: "1px solid black", paddingTop: 15, display: isViewable && loaded ? "block" : "none" }} >
                         <Tabs
@@ -254,7 +272,6 @@ function TrainingGroupPage(props) {
                     </div>
 
                 </Paper>
-
 
 
 
@@ -277,6 +294,13 @@ function TrainingGroupPage(props) {
                 {open.payload ? <GroupDialog open={open} setOpen={setOpen} uid={props.user.uid} /> : null}
 
             </Container>
+
+            <AllMembersDialog
+                // position={{ x: membersDialogOpen.position ? membersDialogOpen.position.x : 1100, y: membersDialogOpen.position ? membersDialogOpen.position.y : 300 }}
+                handleClose={handleCloseMembersDialog}
+                anchorEl={membersDialogOpen}
+                members={groupMembers}
+            />
         </>
 
     )
