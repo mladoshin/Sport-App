@@ -5,7 +5,7 @@ import 'firebase/database'
 import * as firebaseall from 'firebase'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAz06BJIu4CQZ68m2GFAsJbsUrWRVcTNhQ",
+  apiKey: process.env.API_KEY,
   authDomain: "sprint-goals-bc1d3.firebaseapp.com",
   databaseURL: "https://sprint-goals-bc1d3.firebaseio.com",
   projectId: "sprint-goals-bc1d3",
