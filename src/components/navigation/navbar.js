@@ -1,98 +1,78 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { connect } from 'react-redux'
 import { withRouter } from "react-router-dom";
-import { makeStyles } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Typography, Button, IconButton } from '@material-ui/core';
-import MenuIcon from '@material-ui/icons/Menu';
+import { useTheme } from '@material-ui/core/styles';
 
-import MUIDrawer from './drawer'
-import NotificationMenu from "../notifications/notificationMenu"
-import ProfileModalWindow from '../profile/profileModalWindow'
-import AccountMenu from './accountMenu'
-import AccountToolbar from './accountToolbar'
+import HomeRoundedIcon from '@material-ui/icons/HomeRounded';
+import ChatBubbleRoundedIcon from '@material-ui/icons/ChatBubbleRounded';
+import GroupRoundedIcon from '@material-ui/icons/GroupRounded';
+import CalendarTodayRoundedIcon from '@material-ui/icons/CalendarTodayRounded';
 
+import PersonRoundedIcon from '@material-ui/icons/PersonRounded';
+import ContactSupportRoundedIcon from '@material-ui/icons/ContactSupportRounded';
+import InfoRoundedIcon from '@material-ui/icons/InfoRounded';
+// Import a navbar for mobile devices
+import MobileNavbar from "./mobile/mobileNavbar"
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-  },
-  title: {
-    flexGrow: 1,
-    cursor: "pointer"
-  },
-  grow: {
-    flexGrow: 7
-  }
-}));
+// Import a navbar for desktop devices
+import DesktopNavbar from "./desktop/desktopNavbar"
+
+//menu items for coach app
+const userMenu = [
+  {title: "Home", path: "/home", icon: HomeRoundedIcon},
+  {title: "Messages", path: "/chats", icon: ChatBubbleRoundedIcon},
+  {title: "Training Groups", path: "/training-groups", icon: GroupRoundedIcon},
+  {title: "Calendar", path: "/calendar", icon: CalendarTodayRoundedIcon}
+]
+
+//menu items for admin app
+const adminMenu = [
+  {title: "Home", path: ""},
+  {title: "Dashboard", path: "/dashboard"},
+  {title: "Statistics", path: "/statistics"},
+  {title: "Search", path: "/search"}
+]
+
+//menu items for sportsman app
+const sportsmanMenu = [
+  {title: "Home", path: ""},
+  {title: "Messages", path: "/chats"},
+  {title: "Training groups", path: "/training-groups"},
+  {title: "Calendar", path: "/calendar"},
+
+]
+
+const homeMenuItems = [
+  {title: "Home", path: "/", icon: HomeRoundedIcon},
+  {title: "About Us", path: "/aboutUs", icon: InfoRoundedIcon},
+  {title: "Contacts", path: "/contacts", icon: ContactSupportRoundedIcon},
+  {title: "Login", path: "/login", icon: PersonRoundedIcon},
+]
 
 function NavBar(props) {
-  const classes = useStyles();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const theme = useTheme();
+  const [menuItems, setMenuItems] = useState([])
+  const [open, setOpen] = useState(false);
 
-  const [accountAnchor, setAccountAnchor] = useState(null);
-  const [notificationAnchor, setNotificationAnchor] = useState(null);
-  const [openProfile, setOpenProfile] = useState(false)
+  //setting the menu items according to the user's role
+  useEffect(()=>{
+    
+    if(props.user?.uid){
+      setMenuItems(userMenu)
+    }else{
+      setMenuItems(homeMenuItems)
+    }
+    
+  }, [props.user])
 
-  const nameArr = props.user.name ? props.user.name.split(' ') : ["", ""]
-  const avatarAlt = nameArr[0][0]
 
-  function clearReduxState() {
-    props.removeUserInfo()
-    props.clearGoalsState()
-    props.clearCategoriesState()
-    props.clearAvatar()
-    props.clearNotifications()
+  // if the device is mobile, then render a mobile navbar, else render a desktop version of a navbar
+  if (props.mobile){
+    return <MobileNavbar open={open} setOpen={setOpen} user={props.user} menuItems={menuItems}>{props.children}</MobileNavbar>
+  }else{
+    return <DesktopNavbar open={open} setOpen={setOpen} user={props.user} menuItems={menuItems}>{props.children}</DesktopNavbar>
   }
-
-  function sortFunction(a, b) {
-    return b.dateCreated - a.dateCreated
-  }
-
-  const sortedGoals = props.goals ? props.goals : [];
-  try {
-    sortedGoals.sort(sortFunction)
-  } catch (err) { }
-
-  var recent = []
-  try {
-    var i=0
-    sortedGoals.map((item, index) => {
-      if (i < 3 && !item.isCompleted) {
-        recent.push(item)
-        i++
-      }
-    })
-  } catch (err) { }
-
-
-
-  return (
-    <React.Fragment>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu" onClick={() => setDrawerOpen(true)}>
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title} onClick={() => props.history.push("/home")}>
-            Sport Goals
-                  </Typography>
-          <div className={classes.grow} />
-          {props.user.id && props.user.auth ? <AccountToolbar avatarAlt={avatarAlt} url={props.avatar ? props.avatar : null} setAccountAnchor={setAccountAnchor} setNotificationAnchor={setNotificationAnchor} notificationsNumber={props.notifications.length}/> : <Button color="inherit" onClick={() => props.history.push("/signin")}>Login</Button>}
-
-        </Toolbar>
-      </AppBar>
-
-      <AccountMenu setAccountAnchor={setAccountAnchor} setOpenProfile={setOpenProfile} accountAnchor={accountAnchor} setTheme={props.setTheme} theme={props.theme} clearReduxState={clearReduxState} />
-      {openProfile ? <ProfileModalWindow setOpenProfile={setOpenProfile} openProfile={openProfile} avatarAlt={avatarAlt} user={props.user}/> : null}
-      <NotificationMenu setNotificationAnchor={setNotificationAnchor} notificationAnchor={notificationAnchor} notifications={props.notifications} />
-      <MUIDrawer setDrawerOpen={setDrawerOpen} drawerOpen={drawerOpen} drawerVariant="temporary" auth={props.user.auth} recentItems={recent} categories={props.goalCategories} />
-
-    </React.Fragment>
-
-  );
+  
 }
 
 
@@ -100,21 +80,14 @@ const mapStateToProps = state => {
   return {
     user: state.user,
     theme: state.theme,
-    goals: state.goals,
-    goalCategories: state.goalCategories,
-    avatar: state.userAvatar,
-    notifications: state.notifications
+    mobile: state.isMobile
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
     removeUserInfo: () => { dispatch({ type: "USER/LOADINFO", payload: { id: null, auth: false } }) },
-    setTheme: (str) => dispatch({ type: "THEME/CHANGE", payload: str }),
-    clearGoalsState: () => dispatch({ type: "GOALS/LOAD", payload: {} }),
-    clearCategoriesState: () => dispatch({ type: "GOALS/CATEGORY/LOAD", payload: [] }),
-    clearAvatar: ()=>dispatch({ type: "AVATAR/LOAD", payload: "" }),
-    clearNotifications: ()=>dispatch({ type: "NOTIFICATION/LOAD", payload: [] })
+    setTheme: (str) => dispatch({ type: "THEME/CHANGE", payload: str })
   }
 }
 
