@@ -5,10 +5,9 @@ import 'firebase/database'
 import "firebase/functions"
 require("firebase/firestore");
 
-
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyAo_UVgQnHQ3bkaGO6O4y5ZaF5oOyb67h0",
+  apiKey: process.env.REACT_APP_API_KEY,
   authDomain: "sport-app-16c82.firebaseapp.com",
   databaseURL: "https://sport-app-16c82.firebaseio.com",
   projectId: "sport-app-16c82",

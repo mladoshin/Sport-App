@@ -10,12 +10,11 @@ import getSenderPhotoURL from "../../utils/getSenderPhotoURL";
 import CustomAvatar from "../common/avatar"
 import convertImagesToBlob from "../../utils/convertImagesToBlob";
 
-import MoreVertRoundedIcon from '@material-ui/icons/MoreVertRounded';
-import ChatInfoMenu from "./chatInfoMenu";
+import InsertDriveFileRoundedIcon from '@material-ui/icons/InsertDriveFileRounded';
 import ChatHeader from "./chatHeader";
 
 
-function ChatAttachmentPreview({ attachments, clearFiles }) {
+function ChatAttachmentPreview({ attachments, clearFiles, removeFile }) {
     const open = Boolean(attachments.length > 0)
     console.log(open)
 
@@ -29,11 +28,18 @@ function ChatAttachmentPreview({ attachments, clearFiles }) {
                     <Grid container style={{ minHeight: "100%" }}>
                         {Array.from(attachments)?.map((file, index) => {
                             let url = URL.createObjectURL(file)
+                            
+                            let isIMG = false
+                            if(file.type=="image/jpeg" || file.type=="image/png"){
+                                isIMG=true
+                            }
+                            console.log(isIMG)
                             return (
-                                <Grid item xs={6} md={4} lg={3} xl={2} style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-                                    <Card style={{ height: 130, aspectRatio: "1/1", padding: 3, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
-                                        <b style={{ position: "absolute" }}>{file.name}</b>
-                                        <img src={url} style={{ objectFit: "contain", height: "100%", }} />
+                                <Grid item key={index} xs={6} md={4} lg={3} xl={2} style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                                    <Card style={{ height: 130, aspectRatio: "1/1", padding: 3, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", justifyContent: "center", alignItems: "center" }}>
+                                        <b style={{ position: "absolute", top: 5, maxWidth: "70%" }}>{file.name}</b>
+                                        <IconButton style={{position: "absolute", top: 5, right: 5, padding: 3}} onClick={()=>removeFile(index)}><CloseIcon style={{width: 15, height: 15, color: "red"}}/></IconButton>
+                                        {isIMG ? <img src={url} style={{ objectFit: "contain", height: "100%", }} /> : <InsertDriveFileRoundedIcon/>}
 
                                     </Card>
 
@@ -153,6 +159,15 @@ function Chat(props) {
         setFiles([])
     }
 
+    function removeFile(index){
+        setFiles(state => {
+            let newState = Array.from(state)
+            console.log(newState)
+            newState.splice(index, 1)
+            return [...newState]
+        })
+    }
+
 
     return (
         <div className="chat-wrapper">
@@ -166,7 +181,7 @@ function Chat(props) {
 
             <div className="chat-footer">
 
-                <ChatAttachmentPreview attachments={files} clearFiles={clearFiles} />
+                <ChatAttachmentPreview attachments={files} clearFiles={clearFiles} removeFile={removeFile} />
                 <Paper className="chat-footer-paper" square>
                     <Button color="primary" className="atttachBtn" onClick={hadleAttachClick}>Attach</Button>
                     <input type="file" hidden id="fileInput" onChange={handleAttachFile} multiple />

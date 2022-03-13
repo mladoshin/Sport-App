@@ -6,7 +6,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import AddIcon from '@material-ui/icons/Add';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
+//import { CKEditor } from '@ckeditor/ckeditor5-react';
 //import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import DecoupledEditor from '@ckeditor/ckeditor5-build-decoupled-document';
 import firebase from "../../firebase/firebase"
